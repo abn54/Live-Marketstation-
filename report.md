@@ -1,7 +1,7 @@
 # IST 402 — Assignment 4, Part 4.1
 
-**Market Data and the Dashboard**  
-**Student:** abn54  
+**Market Data and the Dashboard**
+**Student:** abn54
 **Date:** November 7, 2026
 
 - **GitHub repository:** [abn54/Live-Marketstation-](https://github.com/abn54/Live-Marketstation-) — public.
