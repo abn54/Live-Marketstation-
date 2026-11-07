@@ -15,6 +15,7 @@ Verified November 7, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLi
 | Closed-market freshness and final-bar completeness | **Passed** | [SPY stale but completed interval](../evidence/market-closed.jpg), ended-final-minute regression test |
 | Recorded playback/seek | **Passed** | [Replay screenshot](../evidence/recorded-replay.jpg), browser QA, exact replay reconstruction in live verification |
 | Genuine recording import to isolated disk database | **Passed; integrity `ok`** | [Import smoke output](../evidence/import-results.txt), [recording](../evidence/btc-recording.json) |
+| Fresh-clone install/test/build/import and production HTTP/WS | **Passed** (29 tests; required stack; isolated database) | [Redacted clean-checkout results](../evidence/clean-checkout.json) |
 | Single combined demonstration/process video | **52.000 seconds; H.264 + AAC; complete decode passed** | [Video](../evidence/part-4-1-demo.mp4), [metadata](../evidence/video-metadata.json), [transcript](../evidence/demo-transcript.md) |
 
 ## Live evidence boundaries
@@ -44,7 +45,7 @@ The [curated log](evidence-log.md) connects instructions, generated code, observ
 
 Run `.venv/bin/python -m scripts.verify_clean_checkout` after committing a candidate. It creates a **fresh Git clone with `--no-local`**, confirms ignored runtime files are absent, creates a new Python environment, installs locked dependencies, runs `npm ci`, tests and the Vue build, initializes/imports an isolated database, and starts a real production FastAPI server to check HTTP and WebSocket snapshot/replay access. It records the exact tested source commit and redacted command results in [clean-checkout.json](../evidence/clean-checkout.json). This check does not claim live Yahoo availability; live-provider evidence is separate above.
 
-The final report records the completed clean-checkout result and identifies its tested source commit. [GitHub Actions](../.github/workflows/checks.yml) runs Python tests, Vue typechecking/build, and isolated recording import on every push/PR. Configured checks are not described as remotely passed unless an actual successful run is observed; the report distinguishes the observed remote status.
+The clean checkout passed in **31.61 seconds** at source commit `5f0a4bae6aab21faae3ceb5acd8df3f5056017ef`: all five ignored runtime paths were absent, nine command stages succeeded, 29 tests and the Vue build passed, and a real production FastAPI HTTP/WebSocket smoke returned the required stack with 360 retrievable candles and recorded replay. The final implementation/evidence commit adds this result and documentation; application source remains unchanged from that tested candidate. [GitHub Actions](../.github/workflows/checks.yml) runs Python tests, Vue typechecking/build, and isolated recording import on every push/PR. Configured checks are not described as remotely passed unless an actual successful run is observed; the report distinguishes the observed remote status.
 
 ## Combined 52-second video
 
