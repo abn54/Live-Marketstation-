@@ -1,0 +1,12 @@
+Imported 1333 recorded receipts from Yahoo Finance; these remain historical, never relabeled live.
+{
+  observations: 1333,
+  revisions: 48,
+  receipts: 1333,
+  duplicates: 0,
+  superseded: 0,
+  lastReceiptId: 1333,
+  candles: 1153,
+  journalMode: 'wal'
+}
+{ integrity: 'ok' }

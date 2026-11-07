@@ -1,0 +1,70 @@
+
+> live-market-workstation@1.0.0 evidence
+> node scripts/capture-evidence.js
+
+Collecting a Yahoo quote and candle update (up to 45 seconds)…
+{
+  "checks": [
+    {
+      "name": "Live Yahoo quote reached the client WebSocket",
+      "passed": true
+    },
+    {
+      "name": "Yahoo candle reached the client WebSocket",
+      "passed": true
+    },
+    {
+      "name": "WebSocket observation 3450 matches committed SQLite content",
+      "passed": true
+    },
+    {
+      "name": "WebSocket observation 3355 matches committed SQLite content",
+      "passed": true
+    },
+    {
+      "name": "Unavailable-feed state is explicit for both upstream channels",
+      "passed": true
+    },
+    {
+      "name": "Unavailable feed does not generate observations",
+      "passed": true
+    },
+    {
+      "name": "Chart history remains retrievable while Yahoo is disconnected",
+      "passed": true
+    },
+    {
+      "name": "Receipt-order replay exactly reconstructs current persisted candles",
+      "passed": true
+    },
+    {
+      "name": "Replay is read-only",
+      "passed": true
+    },
+    {
+      "name": "Yahoo live collection recovers after reconnection",
+      "passed": true
+    },
+    {
+      "name": "SQLite integrity check succeeds",
+      "passed": true
+    }
+  ],
+  "replay": {
+    "symbol": "BTC-USD",
+    "receipts": 11728,
+    "until": 31611,
+    "candles": 360,
+    "mode": "recorded"
+  },
+  "stats": {
+    "observations": 3461,
+    "revisions": 104,
+    "receipts": 31629,
+    "duplicates": 28168,
+    "superseded": 0,
+    "lastReceiptId": 31629,
+    "candles": 3088,
+    "journalMode": "wal"
+  }
+}

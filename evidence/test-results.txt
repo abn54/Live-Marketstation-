@@ -1,0 +1,37 @@
+
+> live-market-workstation@1.0.0 test
+> node --test tests/*.test.js
+
+✔ health exposes unavailable upstream while server and SQLite remain healthy (34.152625ms)
+✔ invalid symbols and pagination rejected; unknown APIs are JSON 404 (61.883084ms)
+✔ fault controls disabled by default and cross-origin requests rejected when enabled (21.769833ms)
+✔ local demo action disconnects and reconnects the feed (7.43875ms)
+✔ real client WebSocket snapshot, persisted update, and REST retrieval agree (11.294416ms)
+✔ exact duplicate preserves one observation and two receipt identities (5.296791ms)
+✔ payload property order does not create a false revision (1.189083ms)
+✔ changed OHLCV creates immutable revision and promotes current head (1.130834ms)
+✔ out-of-order response is preserved but cannot replace a newer snapshot (1.175166ms)
+✔ newer duplicate advances watermark and blocks slow old differing response (1.672834ms)
+✔ return to an earlier value with a newer request is a legitimate revision (1.421125ms)
+✔ completion is a persisted revision and an older partial cannot reopen it (0.956375ms)
+✔ late older minute inserts chronologically without corrupting the latest minute (2.291584ms)
+✔ replay uses receipt order, frozen high watermark, duplicates and superseded records (3.022667ms)
+✔ invalid batch cannot partially persist; volume null differs from zero (1.201167ms)
+✔ latest quote follows source time when an older quote arrives late (0.787792ms)
+✔ database survives close and reopen with revisions and receipts intact (8.266583ms)
+✔ Yahoo protobuf envelope decodes price, provider milliseconds and provenance (5.94525ms)
+✔ normalizer preserves official OHLCV over appended last-price row, completes only earlier bars (0.304791ms)
+✔ invalid prices are omitted, unreported volume stays null (0.106917ms)
+✔ Yahoo error payload and corrupt protocol fail visibly (0.31875ms)
+✔ HTTP 429 is unavailable, leaves prior observations intact, and can recover (3.412792ms)
+✔ outage during an in-flight fetch cannot leak new rows or a healthy status (1.408209ms)
+✔ WebSocket quote is committed before onData; socket close exposes retry state (2.265834ms)
+✔ repeated reconnect is idempotent and does not create extra Yahoo sockets (0.748334ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 375.140584

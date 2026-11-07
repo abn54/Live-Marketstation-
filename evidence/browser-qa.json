@@ -1,0 +1,26 @@
+{
+  "testedAt": "2026-11-07T19:13:29.974Z",
+  "desktop": {
+    "width": 1440,
+    "height": 1080,
+    "chartAndVolumeRendered": true,
+    "ledgerAndPipelineInspected": true,
+    "outageBothChannelsUnavailable": true,
+    "reconnectionRecovered": true,
+    "closedEquityMarkedStale": true
+  },
+  "mobile": {
+    "chartCanvases": 7,
+    "documentWidth": 390,
+    "replayLabel": true,
+    "viewport": 390
+  },
+  "replay": {
+    "playPause": true,
+    "seekToStart": true,
+    "seekToEnd": true,
+    "speedSelection": true,
+    "returnToLive": true
+  },
+  "productionConsoleErrors": []
+}

@@ -1,0 +1,6 @@
+*.mp4 binary
+*.jpg binary
+*.json text eol=lf
+*.js text eol=lf
+*.tsx text eol=lf
+*.md text eol=lf
