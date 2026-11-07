@@ -1,92 +1,98 @@
 # Marketstation · Live Market Workstation
 
-IST 402 — Assignment 4, Part 4.1. A working React + Node client/server dashboard with genuine Yahoo Finance streaming quotes, updating one-minute candlesticks and corresponding volume, WebSocket delivery, and persistent SQLite observations.
+IST 402 — Assignment 4, Part 4.1. A **Vue 3 frontend, Python FastAPI backend, and SQLite database on localhost**, with genuine Yahoo streaming quotes, updating one-minute candlesticks and volume, browser WebSockets, and persistent replay.
 
-[Submission report](report.md) · [Design and schema](docs/design.md) · [Verification](docs/verification.md) · [Demo video](evidence/part-4-1-demo.mp4)
+[Submission report](report.md) · [Design/schema](docs/design.md) · [Verification](docs/verification.md) · [AI/tool disclosure](AI-USE.md) · [Curated process evidence](docs/evidence-log.md) · [Single demo/process video](evidence/part-4-1-demo.mp4)
 
-## Run
+## Initialize and run
 
-Requires **Node.js 24 or newer**, npm, and outbound HTTPS/WSS access to Yahoo Finance. No API keys, account credentials, Python packages, database service, or global SQLite installation are required.
+Requires **Python >=3.12**, **Node >=24**, npm, and outbound HTTPS/WSS to Yahoo. No API key, account login, database service, or global SQLite installation is required. Python's standard-library sqlite3 is the database driver; Python dependencies and frontend dependencies are separately locked.
 
 ```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
 npm ci
 npm run db:init
 npm run dev
 ```
 
-Open **http://127.0.0.1:3000**. The development server serves both the React client and the API/WebSocket on one port. Database initialization is idempotent; startup also initializes a missing database automatically.
+Open **http://127.0.0.1:3000**. Development starts Vue/Vite on 3000 and FastAPI on 8000. Vite proxies `/api` and `/ws`, keeping the browser on one origin. Node runs launchers and frontend tooling; the application backend is Python FastAPI.
 
-For a production build:
+On Windows, use `py -3.12 -m venv .venv` and `.venv\Scripts\python.exe -m pip install -r requirements.txt`. The npm launchers select the virtual environment's Python automatically. In PowerShell, set optional environment variables with `$env:NAME='value'`; the examples below use POSIX shell syntax.
+
+For a production build served directly by FastAPI on port 3000:
 
 ```sh
 npm run build
 npm start
 ```
 
-Stop with Ctrl+C. Restarting keeps all committed records in `data/market.sqlite`. The database uses SQLite WAL, foreign keys, transactions, and FULL synchronization. Do not delete the database to restart the server.
+Stop with Ctrl+C. `npm run db:init` is idempotent, and startup also initializes a missing database. Normal restart/migration preserves `data/market.sqlite`, its observation IDs, revisions, and receipts. Never delete the database just to restart the app. SQLite uses WAL, foreign keys, atomic ingestion transactions, and FULL synchronization.
 
-Optional configuration: copy `.env.example` to `.env`, edit the non-secret settings, and restart. Node loads `.env` automatically. Defaults: `HOST=127.0.0.1`, `PORT=3000`, `DATABASE_PATH=./data/market.sqlite`, `POLL_INTERVAL_MS=15000`, `ENABLE_DEMO_CONTROLS=false`. The poll interval must be at least 10 seconds. The server is designed for a trusted local workstation; it does not include multiuser authentication or internet-facing deployment.
+Optional configuration: copy `.env.example` to `.env` and restart. Defaults: `HOST=127.0.0.1`, `PORT=3000`, `API_PORT=8000` (development only), `DATABASE_PATH=./data/market.sqlite`, `POLL_INTERVAL_MS=15000`, `ENABLE_DEMO_CONTROLS=false`. Poll interval must be >=10000ms. Python and the development launcher load `.env`; no credentials are printed or committed. This is a trusted local workstation, not a multiuser public server.
 
-## Use the dashboard
+## Live dashboard
 
-- Select BTC-USD, ETH-USD, SPY, or AAPL. Bitcoin and Ethereum provide a live demonstration while US equity markets are closed.
-- The main price follows Yahoo's **pricing WebSocket**. Candlesticks and their volume follow Yahoo's **Chart endpoint**, refreshed every 15 seconds and delivered to the browser over the server WebSocket. Price and candle close can differ between refreshes; their source times are visible.
-- Read **Feed health** for quote age, candle age, receipt age, provider, and channel status. A connected socket alone never qualifies data as fresh. Old/missing data is labeled `WAITING / STALE`; upstream failure is labeled `FEED UNAVAILABLE` and retains the last committed candles.
-- Inspect the **Observation ledger** for persisted receipt IDs, logical identity (hover the symbol), source/receipt timestamps, revisions, and duplicate/revised states. **Data pipeline** shows the source → database → WebSocket → chart path.
-- Choose **Replay** to load persisted receipts. Play/pause, seek, restart, and choose a receipt-per-second speed. Playback begins near the end of a recording; restart to see the entire recording. `RECORDED REPLAY` stays explicit while background live collection continues. Click **Live** to return to current data.
-- Use the chart's fit button after resizing, or zoom/pan directly. The price and volume series share the UTC time axis. Missing volume is a gap, not fabricated zero. Reported zero remains zero. Charts use TradingView Lightweight Charts.
+- Select BTC-USD, ETH-USD, SPY, or AAPL. Crypto permits an actual weekend live demonstration while US equities are closed.
+- The main quote price follows Yahoo's **pricing WebSocket**. One-minute candles and their volume follow Yahoo's **Chart HTTPS endpoint**, refreshed every 15 seconds and pushed to Vue over the **FastAPI WebSocket** after a SQLite commit. The live quote and last candle close can differ between chart refreshes; their times are separate.
+- **Feed health** shows provider, quote age, candle age, receipt age, and separate channel states. Live status requires an actual pricing message for the selected symbol during the current server session, a streaming upstream channel, successful candle retrieval, fresh source timestamps, and a connected browser socket. A fresh-looking cached record or connected socket alone is insufficient. Closed/missing data stays `WAITING / STALE`; failed upstream collection stays `FEED UNAVAILABLE` with retained candles.
+- **Observation ledger** shows receipt IDs, logical identity (hover the symbol), source/receipt timestamps (hover for full ISO dates), revisions, and duplicate/revised states. **Data pipeline** shows Yahoo → SQLite commit → FastAPI WebSocket → Vue chart.
+- Candles/volume share a UTC axis. Use fit, zoom, and pan. Unknown volume is a gap; reported zero stays zero. TradingView Lightweight Charts renders both series.
 
-## Demonstrate an unavailable feed
+## Persistence and recorded replay
+
+`server/schema.sql` defines schema v1. `observations` holds immutable content/revisions, `receipts` every normalized arrival, `heads` accepted current content and ordering watermark, and `feed_events` source state transitions. Candle JSON includes OHLCV and `complete`; times are UTC epoch milliseconds. The full [schema and ordering rules](docs/design.md) explain local IDs, provider identity, source/receipt times, revisions, and completion.
+
+A duplicate adds a receipt without a false revision; a newer duplicate advances the request watermark. A changed payload creates a revision. An older request response is retained but cannot replace a newer head. A newer return to an old value is a legitimate revision. All data is committed before broadcast. The migrated Python store opens existing schema-v1 records without rewriting them; decoded-payload equality avoids false revisions from `1` versus `1.0` JSON formatting.
+
+Choose **Replay** for persisted receipt-order playback, play/pause, restart, seek, and receipts-per-second speed. Playback starts near the tail; restart for the full recording. `RECORDED REPLAY` remains explicit, background live collection stays independent, and replay never writes observations back. Click **Live** to return to current collection.
+
+For market-closed/offline development, import the [genuine captured BTC recording](evidence/btc-recording.json) to a separate database:
+
+```sh
+DATABASE_PATH=./data/replay.sqlite npm run recording:import
+DATABASE_PATH=./data/replay.sqlite npm run dev
+```
+
+Then choose Replay. The import preserves logical provider identities and original source/receipt times; numeric row IDs are local to the destination database. The compact fixture omits redundant historical duplicate receipts. It remains historical data, not evidence that Yahoo is currently streaming. CSV loading is ungraded class practice and is outside this part.
+
+## Demonstrate a real unavailable feed
 
 ```sh
 ENABLE_DEMO_CONTROLS=true npm run dev
 ```
 
-Click **Demonstrate feed outage** at the bottom of the page. This terminates the real Yahoo socket, aborts in-flight HTTP requests, and suspends polling. Both channels become unavailable, observation counts stop growing, data ages increase, and the chart remains. Click **Reconnect Yahoo feed** to resume the real providers. Demo controls are disabled by default, same-origin only, and intended for loopback development.
+Click **Demonstrate feed outage** in the footer. This cancels actual upstream socket/HTTP collection and polling. Both channels become unavailable, counts stop growing, source ages increase, and committed candles remain. **Reconnect Yahoo feed** resumes the actual providers. Controls are off by default and reject cross-origin requests. Reconnect is idempotent, and responses from old connection generations cannot leak into a resumed feed.
 
-A failed HTTP request (including 429), malformed quote, or disconnected socket also produces an explicit channel error. WebSocket reconnection uses exponential backoff up to 30 seconds. Chart fetching retries on the polling schedule. No prices are generated as a fallback.
+HTTP failures including 429, malformed data, timeouts, and socket closure expose errors without generating substitute prices. Socket retries use exponential backoff up to 30 seconds; chart requests retry on the poll schedule. TLS is verified using trusted CA roots; certificate verification is never disabled.
 
-## SQLite and replay
-
-`server/schema.sql` is the schema source. `observations` stores immutable logical identities and revisions; `receipts` records every normalized arrival, including duplicates; `heads` selects the accepted current revision; `feed_events` records state transitions. Candle payloads include OHLCV and `complete` in validated JSON. Times are UTC epoch milliseconds. See [the full schema and ordering rules](docs/design.md).
-
-A candle's logical identity is `(source, kind, symbol, interval, minute start)`. Its payload fingerprint excludes arrival time. An unchanged payload adds a receipt without a revision. A changed payload creates a revision. A response from an older request is retained but cannot replace a newer accepted snapshot. A newer return to an old value is a genuine revision. All writes complete before broadcast. Replay uses original receipt order and applies the same accepted updates; it never re-ingests records.
-
-The included [BTC recording](evidence/btc-recording.json) was captured from the actual live source. To prepare a separate database for market-closed development:
-
-```sh
-DATABASE_PATH=./data/replay.sqlite node scripts/import-recording.js
-DATABASE_PATH=./data/replay.sqlite npm run dev
-```
-
-Choose Replay. Importing does not relabel old data as live. Numeric row/receipt IDs belong to the destination database; logical provider identities and original source/receipt times survive import. The recording omits redundant historical duplicate receipts to stay compact. It is an optional development aid; the deliverable's live evidence uses actual network collection. CSV loading is outside this part.
-
-## Verify
+## Verify and reproduce
 
 ```sh
 npm test
 npm run build
 ```
 
-Tests run without Yahoo, credentials, or access to the working database. To repeat the real source → backend → client WebSocket → SQLite checks, start the app with demo controls enabled and run:
+`npm test` runs pytest behavioral tests and FastAPI WebSocket integration tests without contacting Yahoo or the working database. [GitHub Actions](.github/workflows/checks.yml) runs those checks and the Vue build on pushes/PRs. [Clean-checkout evidence](evidence/clean-checkout.json) records dependency installation, tests/build, isolated import, and production server HTTP/WebSocket startup from a checkout without `.venv`, node_modules, `.env`, dist, or an existing database.
+
+For a separate real network check, start the local app with demo controls enabled, then run:
 
 ```sh
 npm run evidence
 ```
 
-This performs a brief real upstream disconnection/recovery and writes `evidence/live-verification.json` and a genuine BTC recording. It fails if no live quote/candle arrives. See [verification and limits](docs/verification.md) for results, evidence links, and the 45-second demo.
+The independent client asserts the required stack, receives fresh Yahoo quotes and an applied candle update through FastAPI's socket, compares committed SQLite records, briefly disconnects/reconnects upstream feeds, and checks replay/integrity. It fails when live data cannot be obtained. It writes `evidence/live-verification.json`, the live run output when redirected, and a compact genuine recording. It deliberately interrupts the local demo feed, so do not run it during another recording.
 
-## Data/provider limitations
+## Scope, disclosure, and limitations
 
-Yahoo's public endpoints have no availability or delay guarantee and may change or rate-limit access. This educational workstation does not promise exchange-grade real time, complete tick coverage, or trading suitability. Chart data is polled, not tick-by-tick OHLCV. Quotes are not summed into candles because daily/rolling cumulative volume is not one-minute traded volume. Candle completion is conservative: a later minute must exist before a bar is finalized. Late provider corrections remain possible after completion.
+The full overview requires Vue/FastAPI/SQLite; the earlier React/Express prototype was migrated when that requirement was supplied. [AI-USE.md](AI-USE.md) discloses the coding agent, known model information, tools, synthesized narration, and revised approach. The [curated evidence log](docs/evidence-log.md) connects prompt excerpts, code, failures, tests, decisions, and uncertainty. It is not a full chat export. The single 30–60 second combined video demonstrates this part and identifies a design/verification decision. Upload only `report.md` to Canvas.
 
-Startup backfills the available one-day chart. Later polls overlap the last three minutes to capture recent revisions; corrections outside that window are discovered only by a subsequent full backfill. Gaps remain gaps. The chart displays the most recent 360 bars; SQLite retains the full observation log. There is no automatic retention/compaction policy, and browser replay is bounded to 200,000 receipts per symbol; the API supports paginated access beyond that. Data still grows over long sessions, so back up and manage the database deliberately.
+Yahoo's public endpoints are unofficial and can change, delay data, or rate limit access. Quotes are not a complete trade tape. Candles use reported OHLCV instead of inferred minute volume from daily/rolling counters. Completeness means the minute had ended by the chart request start time; it is persisted with that fetched observation. A closed market's last bar can therefore complete without waiting for another bar. Outages do not invent finalizing snapshots, and later provider corrections remain possible. No exchange-session calendar is implemented.
 
-## References
+Startup backfills one available day. Later polling overlaps the last three minutes; older corrections require another full backfill. Gaps are not filled. SQLite retains the full log without automatic retention/compaction; the chart displays 360 bars and browser replay is limited to 200,000 receipts per symbol (the API supports further pagination). This deliverable includes no trading, indicators, model decisions, chatbot, vision, live-audio AI, deployment, or mobile build; those belong to later parts or are not required.
 
-- [Yahoo WebSocket transport documented by yfinance](https://ranaroussi.github.io/yfinance/reference/api/yfinance.WebSocket.html)
-- [yfinance reference implementation](https://github.com/ranaroussi/yfinance/blob/main/yfinance/live.py) and [pricing protocol](https://github.com/ranaroussi/yfinance/blob/main/yfinance/pricing.proto)
-- [TradingView Lightweight Charts documentation](https://tradingview.github.io/lightweight-charts/docs)
-- [Node SQLite API](https://nodejs.org/api/sqlite.html)
+## Primary references
 
-The Yahoo wire protocol file is attributed to yfinance in `NOTICE.md`. Lightweight Charts attribution is displayed in the chart and footer. No credentials are stored or shown in this repository.
+[Vue](https://vuejs.org/guide/introduction.html) · [FastAPI WebSockets](https://fastapi.tiangolo.com/advanced/websockets/) · [yfinance WebSocket](https://ranaroussi.github.io/yfinance/reference/api/yfinance.WebSocket.html) · [Yahoo pricing protocol](https://github.com/ranaroussi/yfinance/blob/main/yfinance/pricing.proto) · [Lightweight Charts](https://tradingview.github.io/lightweight-charts/docs)
+
+Third-party attribution/licenses are in [NOTICE.md](NOTICE.md).

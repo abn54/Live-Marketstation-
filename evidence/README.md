@@ -1,11 +1,11 @@
-# Part 4.1 evidence
+# Part 4.1 evidence — Vue / FastAPI / SQLite
 
-- [Single 45-second narrated video](part-4-1-demo.mp4) and [transcript](demo-transcript.md)
-- [Live end-to-end verification](live-verification.json) and [actual run output](live-run-results.txt)
-- [25 passing automated tests](test-results.txt) and [successful production build](build-results.txt)
-- [Browser verification](browser-qa.json)
-- [Live dashboard](live-dashboard.jpg), [unavailable feed](feed-unavailable.jpg), [recorded replay](recorded-replay.jpg), [closed-market stale state](market-closed.jpg), [mobile layout](mobile-dashboard.jpg)
-- [Genuine compact BTC recording](btc-recording.json) and [separate-database import verification](import-results.txt)
-- [Video metadata](video-metadata.json)
+- [Single 52-second combined demonstration/process video](part-4-1-demo.mp4) · [transcript](demo-transcript.md)
+- [13 live end-to-end checks](live-verification.json) · [actual output](live-run-results.txt)
+- [29 passing Python/FastAPI tests](test-results.txt) · [Vue production build](build-results.txt)
+- [Browser QA](browser-qa.json) · [desktop](live-dashboard.jpg) · [outage](feed-unavailable.jpg) · [replay](recorded-replay.jpg) · [closed-market completeness/staleness](market-closed.jpg) · [responsive layout](mobile-dashboard.jpg)
+- [Existing-record preservation](migration-preservation.json) · [selected first-run failures](migration-first-run.txt)
+- [Clean-checkout verification](clean-checkout.json) · [genuine compact BTC recording](btc-recording.json) · [isolated import](import-results.txt)
+- [Video metadata](video-metadata.json) · [curated process log](../docs/evidence-log.md) · [AI/tool disclosure](../AI-USE.md)
 
-These artifacts were captured on November 7, 2026. Counts and prices reflect different capture times. The video contains edited real UI footage and synthesized narration; it does not simulate market updates. The raw database is deliberately not committed. Its normalized observations are represented by the genuine recording, while schema and startup steps remain in the repository.
+Artifacts were captured November 7, 2026 and may show different genuine prices/counts at different times. Current screenshots/video are from Vue/FastAPI; the superseded React/Express prototype remains in Git history only. The video has edited real UI footage and synthesized narration. Injected unit-test cases are distinguished from actual provider captures. No raw database, credentials, private browser content, or full chat export is committed.

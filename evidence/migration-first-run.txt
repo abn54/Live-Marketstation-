@@ -1,0 +1,16 @@
+Selected, redacted observations from the migration's first verification pass:
+
+1. Python WebSocket feed reported:
+   SSLCertVerificationError: certificate verify failed: unable to get local issuer certificate
+   Chart HTTPS requests succeeded, but the socket retried and remained unavailable.
+   Decision: construct a certificate-verifying SSL context using certifi's trusted CA bundle.
+   Verification: Yahoo pricing messages then arrived; a regression test asserts CERT_REQUIRED and hostname verification.
+
+2. Initial pytest run:
+   2 failed, 26 passed, 1 warning
+   FAILED tests/test_app.py::test_real_fastapi_socket_rest_and_sqlite_agree
+     concurrent.futures._base.CancelledError during test WebSocket context shutdown
+   FAILED tests/test_yahoo.py::test_real_async_socket_path_commits_before_publish_and_reports_disconnect
+     expected retry detail before asynchronous cleanup had completed
+   Decisions: make endpoint cancellation cleanup explicit and await the retry status event in the test.
+   This file records the earlier failure, not the final test result; see test-results.txt for the final run.

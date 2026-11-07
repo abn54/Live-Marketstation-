@@ -9,8 +9,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "strict": true
+    "strict": true,
+    "types": ["vite/client"]
   },
-  "include": ["client", "vite.config.ts"]
+  "include": ["client/**/*.ts", "client/**/*.vue", "vite.config.ts"]
 }

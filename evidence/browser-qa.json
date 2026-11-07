@@ -1,5 +1,8 @@
 {
-  "testedAt": "2026-11-07T19:13:29.974Z",
+  "testedAt": "2026-11-07T19:47:25.933Z",
+  "stack": "Vue 3 / FastAPI / SQLite",
+  "developmentProxyVerified": true,
+  "productionBuildVerified": true,
   "desktop": {
     "width": 1440,
     "height": 1080,
@@ -7,12 +10,13 @@
     "ledgerAndPipelineInspected": true,
     "outageBothChannelsUnavailable": true,
     "reconnectionRecovered": true,
-    "closedEquityMarkedStale": true
+    "closedEquityMarkedStale": true,
+    "endedFinalCandleMarkedComplete": true
   },
   "mobile": {
     "chartCanvases": 7,
     "documentWidth": 390,
-    "replayLabel": true,
+    "requiredStackLabel": true,
     "viewport": 390
   },
   "replay": {

@@ -1,0 +1,19 @@
+{
+  "originalImplementationCommit": "020950785a75f4e8d092203108a375f9387d667f",
+  "previousSessionFinalCount": 3671,
+  "currentObservationCount": 3777,
+  "immutableOriginalSamples": [
+    {
+      "observationId": 3450,
+      "logicalId": "yahoo-stream:quote:ETH-USD:tick:1794078713000",
+      "allOriginalColumnsUnchanged": true
+    },
+    {
+      "observationId": 3355,
+      "logicalId": "yahoo-chart:candle:BTC-USD:1m:1794078480000",
+      "allOriginalColumnsUnchanged": true
+    }
+  ],
+  "schemaVersion": 1,
+  "integrity": "ok"
+}

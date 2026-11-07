@@ -43,20 +43,35 @@ ws.on("message", (raw) => {
 try {
   await once(ws, "open");
   evidence.before = await get("/api/health");
-  console.log("Collecting a Yahoo quote and candle update (up to 45 seconds)…");
+  check("Running app uses Vue, FastAPI, and SQLite", () =>
+    assert.deepEqual(evidence.before.stack, {
+      frontend: "Vue 3",
+      backend: "FastAPI",
+      database: "SQLite",
+    }),
+  );
+  console.log(
+    "Collecting a fresh Yahoo quote and applied candle update (up to 45 seconds)…",
+  );
   const deadline = Date.now() + 45000;
   while (
     Date.now() < deadline &&
     (!messages.some((r) => r.observation.kind === "quote") ||
-      !messages.some((r) => r.observation.kind === "candle"))
+      !messages.some((r) => r.observation.kind === "candle" && r.applied))
   )
     await new Promise((r) => setTimeout(r, 250));
   const quote = messages.find((r) => r.observation.kind === "quote"),
-    candle = messages.find((r) => r.observation.kind === "candle");
+    candle = messages.find((r) => r.observation.kind === "candle" && r.applied);
   check("Live Yahoo quote reached the client WebSocket", () =>
     assert.ok(quote),
   );
   check("Yahoo candle reached the client WebSocket", () => assert.ok(candle));
+  check("Yahoo quote source timestamp is current", () => {
+    assert.equal(quote.observation.source, "yahoo-stream");
+    assert.ok(
+      quote.observation.sourceTime >= evidence.before.serverTime - 60000,
+    );
+  });
   evidence.clientWebSocket = { quote, candle };
   for (const item of [quote, candle]) {
     const row = db

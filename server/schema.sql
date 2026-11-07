@@ -1,6 +1,6 @@
 PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, installed_at INTEGER NOT NULL);
-INSERT OR IGNORE INTO schema_version VALUES (1, CAST(unixepoch('subsec') * 1000 AS INTEGER));
+INSERT OR IGNORE INTO schema_version VALUES (1, CAST(strftime('%s','now') AS INTEGER) * 1000);
 CREATE TABLE IF NOT EXISTS observations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   logical_id TEXT NOT NULL,

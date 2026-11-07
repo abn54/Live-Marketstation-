@@ -1,12 +1,7 @@
-Imported 1333 recorded receipts from Yahoo Finance; these remain historical, never relabeled live.
-{
-  observations: 1333,
-  revisions: 48,
-  receipts: 1333,
-  duplicates: 0,
-  superseded: 0,
-  lastReceiptId: 1333,
-  candles: 1153,
-  journalMode: 'wal'
-}
-{ integrity: 'ok' }
+
+> live-market-workstation@1.1.0 recording:import
+> node scripts/run-python.mjs -m scripts.import_recording
+
+Imported 1733 recorded receipts from Yahoo Finance; historical data is never relabeled live.
+{'observations': 1733, 'revisions': 156, 'receipts': 1733, 'duplicates': 0, 'superseded': 0, 'lastReceiptId': 1733, 'candles': 1189, 'journalMode': 'wal'}
+{'integrity': 'ok'}

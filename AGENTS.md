@@ -1,30 +1,30 @@
 # Agent instructions
 
-## Scope
+## Scope and required stack
 
-Implement and maintain Assignment 4 Part 4.1: genuine Yahoo live data, a working client/server dashboard, WebSockets, SQLite persistence/replay, and submission evidence. CSV loading is optional class practice. Do not expand into trading, portfolios, order execution, or subsequent assignment parts.
+Implement Assignment 4 Part 4.1 only: genuine Yahoo live data, Vue 3 frontend, Python FastAPI backend, WebSockets, SQLite persistence/replay, and evidence. The full overview supplied by the user explicitly requires Vue + FastAPI + SQLite on localhost. The previous React/Express implementation is a documented revised approach, not the accepted stack. Do not add indicators, trading, AI model integration, or later assignment parts. CSV loading is ungraded practice; deployment and mobile builds are not required.
 
 ## Development
 
-- Use Node >=24 and npm. Run `npm ci`, `npm run db:init`, and `npm run dev` from the repository root. `npm run build` typechecks and builds; `npm start` serves that production build.
-- Keep the SQLite schema in `server/schema.sql`, ingestion in `server/store.js`, provider logic in `server/yahoo.js`, HTTP/WS transport in `server/app.js`, and UI in `client/`.
-- Use loopback by default. `.env` and `data/` runtime contents are ignored. Never commit credentials, local databases, WAL files, node_modules, or build outputs. No Yahoo API key is needed.
-- Existing records must survive normal restarts. Never reset the working database to fix a UI problem. Use in-memory or isolated temporary databases in tests.
+- Use Python >=3.12 and Node >=24. Create `.venv`, install `requirements.txt`, run `npm ci`, `npm run db:init`, and `npm run dev`. Development starts Vite on 3000 and FastAPI on 8000 with same-origin API/WS proxying. `npm run build` typechecks Vue and builds; `npm start` serves the built Vue client directly from FastAPI on 3000.
+- Keep SQLite schema in `server/schema.sql`, ingestion in `server/store.py`, provider code in `server/yahoo.py`, FastAPI HTTP/WS routes in `server/main.py`, and Vue components in `client/`. Node scripts are launchers and an independent verification client, not the application backend.
+- Default to loopback. Never commit `.venv`, `.env`, SQLite/WAL files, node_modules, or build outputs. Yahoo requires no API credentials. Validate TLS using trusted certificate roots; never disable certificate verification to make a feed work.
+- Preserve existing records through migration and restart. Schema v1 is shared with the prior implementation. Semantic payload equality prevents numeric JSON formatting (1 versus 1.0) from creating false migration revisions. Never reset a user's database to fix code; tests use in-memory or isolated temporary databases.
 
-## Invariants
+## Data invariants
 
-- Never generate or substitute prices in live mode. Recorded data must remain visibly recorded/stale. Do not call cached chart history a live source demonstration.
-- Preserve provider provenance, logical identity, source/receipt times, all distinct revisions, duplicate receipt identities, and candle completeness. Receipt order is local receipt ID order; source time must not be rewritten to receipt time.
-- Commit an observation and its receipt atomically before broadcasting. Advance the ordering watermark for a newer duplicate. Older request responses cannot overwrite newer accepted heads.
-- Keep OHLCV from Yahoo Chart. Do not infer candle volume from Yahoo's daily/rolling volume counters. Do not replace unknown volume with zero or silently fill missing candles.
-- Replay is a read-only receipt log with a frozen high watermark and explicit `applied` flags. Keep it independent from live ingestion.
-- An outage must stop real upstream collection and retain stored chart history. Demo controls are opt-in and same-origin. Resume must be idempotent; ignore responses from a prior connection generation.
-- Update README, design notes, and relevant verification notes when schema, ordering, startup, or provider behavior changes.
+- Never generate prices in live mode. Recorded/stale data must remain labeled. A refreshing screen or connected socket does not establish current source data.
+- Preserve logical provider identity, source/receipt times, immutable revisions, every duplicate receipt, and candle completeness. Keep original source time separate from local receipt order.
+- Commit observation, head, and receipt atomically before broadcast. A newer duplicate advances the ordering watermark. Older request responses cannot overwrite newer accepted heads.
+- Keep OHLCV/volume from Yahoo Chart. Do not infer minute volume from daily/rolling quote volume; unknown volume is null, reported zero is zero, gaps are not filled.
+- Replay is read-only, frozen at a receipt watermark, and applies only records with `applied=true`. Live collection remains independent.
+- Demo outage controls are opt-in, same-origin, stop real collection, retain history, and ignore prior-generation responses. Reconnect is idempotent.
+- Update README, design notes, verification notes, AI-USE.md, and the curated evidence log when behavior, dependencies, tooling, or requirements change.
 
 ## Verification and submission
 
-Run `npm test` and `npm run build` for relevant implementation changes. Tests must cover real behavioral invariants, including duplicates, revisions, out-of-order responses, replay, restart persistence, provider failures, and commit-before-broadcast. Unit/integration tests must not contact Yahoo. `npm run evidence` deliberately contacts Yahoo and briefly interrupts the local demo feed; use it only on a demo-enabled local server.
+Run `npm test` (pytest behavioral and FastAPI WebSocket tests) and `npm run build`. Run checks from a clean checkout before the submitted version. GitHub Actions runs Python tests and the Vue build on pushes/PRs. Network tests are separate: `npm run evidence` requires a local demo-enabled server, contacts real Yahoo endpoints, and briefly disconnects/reconnects them. Never misrepresent injected failures or synthetic test values as live market observations.
 
-Use supported browser tools to inspect actual chart rendering, replay, outage/recovery, desktop/mobile layouts, and browser errors. Save evidence from the working app. Do not fabricate verification output or misrepresent synthetic fixtures as live capture. Keep demo video between 30 and 60 seconds and verify the final public links.
+Use supported browser tools for the actual Vue chart, ledger, replay, and outage/recovery. Do not access restricted browser pages. Keep the single combined demonstration/process video between 30 and 60 seconds, using the final required-stack app and identifying a design or verification decision. Disclose coding agents, models (only known identifiers), tools, and revised approaches in AI-USE.md. Curated evidence entries must connect intent/prompt excerpt, artifact, test/browser observation, decision, and uncertainty, including at least one failed/revised approach. Redact credentials and private information; do not commit full chat exports.
 
-Canvas receives only `report.md`; source code and the video remain in the accessible GitHub repository. The report must identify the submitted implementation commit, summarize design/verification/limitations, and link supporting documents and the single video.
+Canvas receives only `report.md`, with repository URL, submitted implementation commit, single accessible video, completed work, design, verification, limitations, and supporting links. Source and media remain in the public GitHub repository. Keep report links pinned to the submitted implementation/evidence commit; a following report-only commit is acceptable and must be described honestly.

@@ -1,10 +1,14 @@
 
-> live-market-workstation@1.0.0 evidence
+> live-market-workstation@1.1.0 evidence
 > node scripts/capture-evidence.js
 
-Collecting a Yahoo quote and candle update (up to 45 seconds)…
+Collecting a fresh Yahoo quote and applied candle update (up to 45 seconds)…
 {
   "checks": [
+    {
+      "name": "Running app uses Vue, FastAPI, and SQLite",
+      "passed": true
+    },
     {
       "name": "Live Yahoo quote reached the client WebSocket",
       "passed": true
@@ -14,11 +18,15 @@ Collecting a Yahoo quote and candle update (up to 45 seconds)…
       "passed": true
     },
     {
-      "name": "WebSocket observation 3450 matches committed SQLite content",
+      "name": "Yahoo quote source timestamp is current",
       "passed": true
     },
     {
-      "name": "WebSocket observation 3355 matches committed SQLite content",
+      "name": "WebSocket observation 4254 matches committed SQLite content",
+      "passed": true
+    },
+    {
+      "name": "WebSocket observation 4255 matches committed SQLite content",
       "passed": true
     },
     {
@@ -52,19 +60,19 @@ Collecting a Yahoo quote and candle update (up to 45 seconds)…
   ],
   "replay": {
     "symbol": "BTC-USD",
-    "receipts": 11728,
-    "until": 31611,
+    "receipts": 12444,
+    "until": 33876,
     "candles": 360,
     "mode": "recorded"
   },
   "stats": {
-    "observations": 3461,
-    "revisions": 104,
-    "receipts": 31629,
-    "duplicates": 28168,
+    "observations": 4259,
+    "revisions": 318,
+    "receipts": 33893,
+    "duplicates": 29634,
     "superseded": 0,
-    "lastReceiptId": 31629,
-    "candles": 3088,
+    "lastReceiptId": 33893,
+    "candles": 3160,
     "journalMode": "wal"
   }
 }
