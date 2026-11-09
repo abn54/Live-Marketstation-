@@ -6,7 +6,7 @@
 
 - **Public repository:** [abn54/Live-Marketstation-](https://github.com/abn54/Live-Marketstation-).
 - **Implementation and evidence commit:** [`3b5bb029c2d0d2fa29ec1e711133e470882f088c`](https://github.com/abn54/Live-Marketstation-/commit/3b5bb029c2d0d2fa29ec1e711133e470882f088c). Supporting links are pinned to this version. The later report commit records that pin and the status of my recording.
-- **Student-recorded video:** Recording/link pending. I will record and narrate my own single 30–60 second demonstration. [Speaking script and screen actions](https://github.com/abn54/Live-Marketstation-/blob/3b5bb029c2d0d2fa29ec1e711133e470882f088c/docs/part-4-1-speaking-script.md). Add the actual accessible video link before Canvas submission.
+- **Student-recorded video:** Recording/link pending. I will record and narrate one 30–60 second demonstration. [Word-for-word script and screen actions for recording](https://github.com/abn54/Live-Marketstation-/blob/6c30eb92c0d4a901350f93ed9c621932e7770341/docs/part-4-1-speaking-script.md). Replace this entry with the accessible video link before Canvas submission.
 - **AI/tool disclosure:** [AI-USE.md](https://github.com/abn54/Live-Marketstation-/blob/3b5bb029c2d0d2fa29ec1e711133e470882f088c/AI-USE.md) · **Curated process evidence:** [evidence log](https://github.com/abn54/Live-Marketstation-/blob/3b5bb029c2d0d2fa29ec1e711133e470882f088c/docs/evidence-log.md).
 
 ## Completed
