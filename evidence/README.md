@@ -8,4 +8,4 @@
 - [Clean-checkout verification](clean-checkout.json) · [genuine compact BTC recording](btc-recording.json) · [isolated import](import-results.txt)
 - [Curated process log](../docs/evidence-log.md) · [AI/tool disclosure](../AI-USE.md)
 
-Screenshots were captured November 7, 2026. The November 9 browser rehearsal and independent live check are recorded separately and contain the genuine prices and counts observed in those runs. The student's recording link remains pending. The curated evidence distinguishes injected test data from genuine provider captures.
+Screenshots were captured November 7, 2026. The November 9 browser rehearsal and independent live check are recorded separately and contain the genuine prices and counts observed in those runs. The [submission report](../report.md) links the student-recorded demonstration. The curated evidence distinguishes injected test data from genuine provider captures.

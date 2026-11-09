@@ -17,7 +17,7 @@ Verified November 7 and rechecked November 9, 2026 with Vue 3, Python 3.12, Fast
 | November 9 recording rehearsal | **Passed** on the updated production app | [Live chart, narrow ledger, replay, outage and recovery](../evidence/demo-readiness.json) |
 | Genuine recording import to isolated disk database | **Passed; integrity `ok`** | [Import smoke output](../evidence/import-results.txt), [recording](../evidence/btc-recording.json) |
 | Fresh-clone install/test/build/import and production HTTP/WS | **Passed**, including 30 tests and isolated SQLite | [Redacted clean-checkout results](../evidence/clean-checkout.json) |
-| Student-recorded demonstration/process video | **Recording link pending** | [Submission report](../report.md) |
+| Student-recorded demonstration/process video | **58.92 seconds**, original student narration and screen recording | [Submission report](../report.md) |
 
 ## Live evidence boundaries
 
@@ -48,13 +48,11 @@ Run `.venv/bin/python -m scripts.verify_clean_checkout` after committing a candi
 
 The clean checkout passed in **31.03 seconds** at source commit `31c69e001ee6f68f56526d458332f79ee80aa1d8`. All five ignored runtime paths were absent, nine command stages succeeded, 30 tests and the Vue build passed, and the production HTTP/WebSocket smoke returned the required stack with 360 retrievable candles and recorded replay. The following commit captures these results. [GitHub Actions](../.github/workflows/checks.yml) runs Python tests, Vue typechecking and build, and isolated recording import on pushes and pull requests.
 
-## Student-recorded video pending
+## Student-recorded video
 
-The user will speak and record the demonstration themselves. The generated narrated MP4, transcript, media metadata, and assembly script have been removed from the current submission. Earlier generation/verification remains disclosed in AI-USE.md and Git history, but is not evidence of a completed student recording.
+The submitted clip was cut from the student's 3:14 Kaltura recording. The first section shows the live quote, candle chart, and feed health. The ledger and data pipeline follow around 0:17 and 0:24, including the student's explanation of committing updates before broadcast. Replay appears around 0:38. The deliberate outage and reconnection begin around 0:47.
 
-The student’s 30–60 second demonstration will show the live chart and feed health, receipt and revision history, SQLite before WebSocket delivery, replay, outage and recovery, and one design or verification decision.
-
-Add the student's actual accessible link to report.md before submitting. There is currently no replacement video link, so the video portion of submission packaging is incomplete. Other application/test/browser/clean-checkout evidence above remains valid.
+FFprobe measured the exported file at **58.92 seconds**. The H.264 video and original AAC speech decoded successfully in FFmpeg. The [submission report](../report.md) links the clip.
 
 ## Browser and remaining limits
 

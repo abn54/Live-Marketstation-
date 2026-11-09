@@ -8,12 +8,12 @@ The user supplied the complete Assignment 4 overview as pasted text after the in
 | Yahoo live streaming and charting-library price/volume visualization | Yahoo pricing WSS + chart OHLCV; FastAPI `/ws` → Vue → TradingView candlesticks/histogram. Current source ages and feed states visible. |
 | Identity, source/receipt times, revisions, completion | Immutable schema-v1 observations, receipt audit log, accepted heads, fetched interval-end completeness. Data survives migration/restart. |
 | Duplicate/revised/out-of-order handling and replay | Store tests; frozen receipt-order read-only replay; genuine market-closed development recording. |
-| Source → backend → chart/database and unavailable-feed evidence | Independent live WebSocket/SQLite comparisons, actual Vue captures and real upstream pause/recovery; student-recorded video pending. |
+| Source → backend → chart/database and unavailable-feed evidence | Independent live WebSocket and SQLite comparisons, Vue captures, and real upstream pause and recovery in the student-recorded demonstration. |
 | README, agent instructions, design/schema/startup | Repository root README/AGENTS, `docs/design.md`, `server/schema.sql`, pinned dependencies, idempotent initialization, no required credentials. |
 | Continue Git/GitHub, browser tests, AI-use/process evidence | Git history; actual local-browser checks; `AI-USE.md`; `docs/evidence-log.md` with revised stack, TLS failure, generated code, tests, and uncertainty; clean checkout and push/PR checks. |
 | Canvas packaging | Only `report.md`, with repository URL, submitted implementation/evidence commit, accessible single 30–60 second combined demonstration/process video, results, decisions, limitations, and support links. |
 
-The overview's disclosure and evidence practices apply across the cumulative parts. The student will explain a design or verification decision in the combined recording. The report and curated log explain the revised approach and relevant generated code.
+The overview's disclosure and evidence practices apply across the cumulative parts. The student explains the SQLite commit before WebSocket delivery in the combined recording. The report and curated log explain the revised approach and relevant generated code.
 
 ## Deferred to later parts
 

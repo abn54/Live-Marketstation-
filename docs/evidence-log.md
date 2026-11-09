@@ -50,7 +50,7 @@ These are selected decision records, not a complete chat export. Prompt excerpts
 
 - **Instruction excerpts:** “including an unavailable-feed condition”; “upload only report.md”. The overview also requires tool/model disclosure and one combined 30–60 second demonstration/process video.
 - **Artifacts:** Upstream pause and resume in `YahooFeed`, read-only `/api/replay`, Vue replay controls, [AI-USE.md](../AI-USE.md), this curated log, and the report.
-- **Verification:** Live checks confirm both upstream channels become unavailable, no market records are generated during the pause, existing candles remain queryable, actual collection recovers, and receipt-order replay exactly reconstructs persisted candles without writes. Browser checks exercise playback/seek/return-to-live. The earlier generated video was withdrawn; no completed student recording or duration check is claimed.
+- **Verification:** Live checks confirm both upstream channels become unavailable, no market records are generated during the pause, existing candles remain queryable, actual collection recovers, and receipt-order replay exactly reconstructs persisted candles without writes. Browser checks exercise playback, seeking, and returning to live.
 - **Decision:** Show retained data with explicit outage/replay labels; submit one Markdown report linking public repository/commit, supporting evidence, and a single combined demo/process video. The student will include a design/verification decision in their own narration. No source files/ZIPs go to Canvas.
 - **Remaining uncertainty:** The instructor's access to a future university submission is not established by public GitHub checks. Canvas upload remains a student action. No later assignment capabilities or student comprehension are claimed complete by this Part 4.1 implementation.
 
@@ -65,7 +65,7 @@ These are selected decision records, not a complete chat export. Prompt excerpts
 
 - **Intent:** The student chose to present and narrate the demonstration in their own voice.
 - **Decision and artifacts:** Withdraw the generated MP4, transcript, media metadata, and assembler. Keep genuine market recordings, screenshots, tests, and the tool disclosure as evidence.
-- **Verification and remaining work:** The report awaits the student's accessible recording link.
+- **Verification:** The student's Kaltura recording was 3:14. The exported 58.92-second clip preserves the live chart, ledger, replay, outage and recovery, and the student's explanation of SQLite before WebSocket delivery. FFmpeg decoded both streams successfully. The [report](../report.md) links the clip.
 
 ## 9. Recording rehearsal and replay responsiveness
 

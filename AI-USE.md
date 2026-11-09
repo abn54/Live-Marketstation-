@@ -40,4 +40,4 @@ Codex used the browser to rehearse the recording flow after the student reported
 
 ## Student-recorded video preference
 
-The student chose to record the demonstration in their own voice. Codex prepared private recording notes. The report awaits the student's accessible 30–60 second recording link.
+The student recorded and narrated the demonstration in Kaltura. Codex prepared private recording notes and used the Kaltura transcript and FFmpeg to select and trim scenes from the student's recording. The 58.92-second clip uses the student's original narration and dashboard footage. The report links the submitted clip.
