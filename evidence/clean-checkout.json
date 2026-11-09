@@ -1,5 +1,5 @@
 {
-  "sourceCommit": "5f0a4bae6aab21faae3ceb5acd8df3f5056017ef",
+  "sourceCommit": "31c69e001ee6f68f56526d458332f79ee80aa1d8",
   "method": "fresh git clone --no-local; no ignored runtime files copied",
   "checks": [
     {
@@ -12,7 +12,7 @@
         "<clean-checkout>"
       ],
       "exitCode": 0,
-      "seconds": 0.32,
+      "seconds": 0.39,
       "outputTail": ""
     },
     {
@@ -20,10 +20,10 @@
         "git",
         "checkout",
         "--quiet",
-        "5f0a4bae6aab21faae3ceb5acd8df3f5056017ef"
+        "31c69e001ee6f68f56526d458332f79ee80aa1d8"
       ],
       "exitCode": 0,
-      "seconds": 0.04,
+      "seconds": 0.03,
       "outputTail": ""
     },
     {
@@ -34,7 +34,7 @@
         ".venv"
       ],
       "exitCode": 0,
-      "seconds": 1.93,
+      "seconds": 2.13,
       "outputTail": ""
     },
     {
@@ -48,7 +48,7 @@
         "requirements.txt"
       ],
       "exitCode": 0,
-      "seconds": 16.26,
+      "seconds": 14.53,
       "outputTail": "\n[notice] A new release of pip is available: 24.2 -> 26.3\n[notice] To update, run: /private<clean-checkout>/.venv/bin/python -m pip install --upgrade pip\n"
     },
     {
@@ -68,8 +68,8 @@
         "test"
       ],
       "exitCode": 0,
-      "seconds": 5.39,
-      "outputTail": "\n> live-market-workstation@1.1.0 test\n> node scripts/run-python.mjs -m pytest -q\n\n.............................                                            [100%]\n29 passed in 4.63s\n"
+      "seconds": 6.01,
+      "outputTail": "\n> live-market-workstation@1.1.0 test\n> node scripts/run-python.mjs -m pytest -q\n\n..............................                                           [100%]\n30 passed in 5.20s\n"
     },
     {
       "command": [
@@ -78,8 +78,8 @@
         "build"
       ],
       "exitCode": 0,
-      "seconds": 3.34,
-      "outputTail": "\n> live-market-workstation@1.1.0 build\n> vue-tsc --noEmit && vite build\n\nvite v7.3.7 building client environment for production...\ntransforming...\n\u2713 2059 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.92 kB \u2502 gzip:  0.55 kB\ndist/assets/index-uiod62Hr.css   19.25 kB \u2502 gzip:  4.95 kB\ndist/assets/index-hyE6xSjj.js   264.77 kB \u2502 gzip: 91.04 kB\n\u2713 built in 1.30s\n"
+      "seconds": 3.6,
+      "outputTail": "\n> live-market-workstation@1.1.0 build\n> vue-tsc --noEmit && vite build\n\nvite v7.3.7 building client environment for production...\ntransforming...\n\u2713 2059 modules transformed.\nrendering chunks...\ncomputing gzip size...\ndist/index.html                   0.92 kB \u2502 gzip:  0.55 kB\ndist/assets/index-9Ci7XQXx.css   20.61 kB \u2502 gzip:  5.31 kB\ndist/assets/index-CDyhRaMP.js   265.98 kB \u2502 gzip: 91.29 kB\n\u2713 built in 1.43s\n"
     },
     {
       "command": [
@@ -88,7 +88,7 @@
         "db:init"
       ],
       "exitCode": 0,
-      "seconds": 0.27,
+      "seconds": 0.28,
       "outputTail": "\n> live-market-workstation@1.1.0 db:init\n> node scripts/run-python.mjs -m scripts.init_db\n\nSQLite initialized: <clean-checkout>/data/clean.sqlite\n{'observations': 0, 'revisions': 0, 'receipts': 0, 'duplicates': 0, 'superseded': 0, 'lastReceiptId': 0, 'candles': 0, 'journalMode': 'wal'}\n"
     },
     {
@@ -98,7 +98,7 @@
         "recording:import"
       ],
       "exitCode": 0,
-      "seconds": 0.54,
+      "seconds": 0.55,
       "outputTail": "\n> live-market-workstation@1.1.0 recording:import\n> node scripts/run-python.mjs -m scripts.import_recording\n\nImported 1733 recorded receipts from Yahoo Finance; historical data is never relabeled live.\n{'observations': 1733, 'revisions': 156, 'receipts': 1733, 'duplicates': 0, 'superseded': 0, 'lastReceiptId': 1733, 'candles': 1189, 'journalMode': 'wal'}\n{'integrity': 'ok'}\n"
     }
   ],
@@ -123,9 +123,9 @@
     "webSocket": {
       "type": "snapshot",
       "symbols": 4,
-      "persistedObservations": 1738
+      "persistedObservations": 1733
     }
   },
   "passed": true,
-  "seconds": 31.61
+  "seconds": 31.03
 }

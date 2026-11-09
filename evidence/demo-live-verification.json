@@ -1,0 +1,412 @@
+{
+  "capturedAt": "2026-11-09T16:28:51.411Z",
+  "origin": "Actual Yahoo Finance network observations; no synthetic prices",
+  "checks": [
+    {
+      "name": "Running app uses Vue, FastAPI, and SQLite",
+      "passed": true
+    },
+    {
+      "name": "Live Yahoo quote reached the client WebSocket",
+      "passed": true
+    },
+    {
+      "name": "Yahoo candle reached the client WebSocket",
+      "passed": true
+    },
+    {
+      "name": "Yahoo quote source timestamp is current",
+      "passed": true
+    },
+    {
+      "name": "WebSocket observation 56182 matches committed SQLite content",
+      "passed": true
+    },
+    {
+      "name": "WebSocket observation 56178 matches committed SQLite content",
+      "passed": true
+    },
+    {
+      "name": "Unavailable-feed state is explicit for both upstream channels",
+      "passed": true
+    },
+    {
+      "name": "Unavailable feed does not generate observations",
+      "passed": true
+    },
+    {
+      "name": "Chart history remains retrievable while Yahoo is disconnected",
+      "passed": true
+    },
+    {
+      "name": "Receipt-order replay exactly reconstructs current persisted candles",
+      "passed": true
+    },
+    {
+      "name": "Replay is read-only",
+      "passed": true
+    },
+    {
+      "name": "Yahoo live collection recovers after reconnection",
+      "passed": true
+    },
+    {
+      "name": "SQLite integrity check succeeds",
+      "passed": true
+    }
+  ],
+  "before": {
+    "ok": true,
+    "serverTime": 1794241740145,
+    "stats": {
+      "observations": 56178,
+      "revisions": 13995,
+      "receipts": 135655,
+      "duplicates": 79477,
+      "superseded": 0,
+      "lastReceiptId": 135655,
+      "candles": 8758,
+      "journalMode": "wal"
+    },
+    "feed": {
+      "stream": {
+        "state": "connected",
+        "detail": "Connected; waiting for a pricing message"
+      },
+      "chart": {
+        "state": "connecting",
+        "detail": "Waiting for Yahoo candles"
+      },
+      "paused": false,
+      "symbols": {
+        "BTC-USD": {
+          "name": "Bitcoin USD",
+          "currency": "USD",
+          "exchange": "CCC",
+          "marketTime": 1794241729000,
+          "chartState": "available",
+          "chartError": null,
+          "lastChartReceivedAt": 1794241740106,
+          "lastCandleSourceTime": 1794241680000
+        }
+      },
+      "pollMs": 15000
+    },
+    "demoControls": true,
+    "stack": {
+      "frontend": "Vue 3",
+      "backend": "FastAPI",
+      "database": "SQLite"
+    }
+  },
+  "clientWebSocket": {
+    "quote": {
+      "receiptId": 135668,
+      "receivedAt": 1794241740458,
+      "disposition": "inserted",
+      "applied": true,
+      "observation": {
+        "id": 56182,
+        "logicalId": "yahoo-stream:quote:SPY:tick:1794241739000",
+        "revision": 1,
+        "source": "yahoo-stream",
+        "kind": "quote",
+        "symbol": "SPY",
+        "interval": "tick",
+        "sourceTime": 1794241739000,
+        "receivedAt": 1794241740458,
+        "orderingTime": 1794241740458,
+        "changePercent": 1.9461872577667236,
+        "currency": "USD",
+        "dayVolume": 16233570,
+        "exchange": "PCX",
+        "marketHours": 1,
+        "price": 749.60009765625
+      }
+    },
+    "candle": {
+      "receiptId": 135655,
+      "receivedAt": 1794241740106,
+      "disposition": "revised",
+      "applied": true,
+      "observation": {
+        "id": 56178,
+        "logicalId": "yahoo-chart:candle:BTC-USD:1m:1794241680000",
+        "revision": 4,
+        "source": "yahoo-chart",
+        "kind": "candle",
+        "symbol": "BTC-USD",
+        "interval": "1m",
+        "sourceTime": 1794241680000,
+        "receivedAt": 1794241740106,
+        "orderingTime": 1794241731249,
+        "close": 74683.828125,
+        "complete": false,
+        "high": 74683.828125,
+        "low": 74683.828125,
+        "open": 74683.828125,
+        "volume": 0
+      }
+    }
+  },
+  "databaseSamples": [
+    {
+      "id": 56182,
+      "logical_id": "yahoo-stream:quote:SPY:tick:1794241739000",
+      "revision": 1,
+      "source": "yahoo-stream",
+      "kind": "quote",
+      "symbol": "SPY",
+      "interval": "tick",
+      "source_time": 1794241739000,
+      "received_at": 1794241740458,
+      "ordering_time": 1794241740458,
+      "payload_hash": "8ee4409a1f92c8f0c98dd3a7b28ee90189245ddf14758bbc9a7978edae07e458",
+      "payload_json": "{\"changePercent\":1.9461872577667236,\"currency\":\"USD\",\"dayVolume\":16233570,\"exchange\":\"PCX\",\"marketHours\":1,\"price\":749.60009765625}"
+    },
+    {
+      "id": 56178,
+      "logical_id": "yahoo-chart:candle:BTC-USD:1m:1794241680000",
+      "revision": 4,
+      "source": "yahoo-chart",
+      "kind": "candle",
+      "symbol": "BTC-USD",
+      "interval": "1m",
+      "source_time": 1794241680000,
+      "received_at": 1794241740106,
+      "ordering_time": 1794241731249,
+      "payload_hash": "2c9e0b5abf3bf2d59e5381d0d47beadca4bb11fdf81556a4f5ff6570983bce0c",
+      "payload_json": "{\"close\":74683.828125,\"complete\":false,\"high\":74683.828125,\"low\":74683.828125,\"open\":74683.828125,\"volume\":0}"
+    }
+  ],
+  "outage": {
+    "feed": {
+      "stream": {
+        "state": "unavailable",
+        "detail": "Demonstration: upstream connections intentionally disconnected",
+        "lastReceivedAt": 1794241740833
+      },
+      "chart": {
+        "state": "unavailable",
+        "detail": "Demonstration: upstream connections intentionally disconnected",
+        "lastReceivedAt": 1794241740457
+      },
+      "paused": true,
+      "symbols": {
+        "BTC-USD": {
+          "name": "Bitcoin USD",
+          "currency": "USD",
+          "exchange": "CCC",
+          "marketTime": 1794241729000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740106,
+          "lastCandleSourceTime": 1794241680000
+        },
+        "ETH-USD": {
+          "name": "Ethereum USD",
+          "currency": "USD",
+          "exchange": "CCC",
+          "marketTime": 1794241735000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740211,
+          "lastCandleSourceTime": 1794241680000
+        },
+        "SPY": {
+          "name": "State Street SPDR S&P 500 ETF T",
+          "currency": "USD",
+          "exchange": "PCX",
+          "marketTime": 1794241737000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740311,
+          "lastCandleSourceTime": 1794241680000,
+          "lastQuoteReceivedAt": 1794241740458,
+          "lastQuoteSourceTime": 1794241739000
+        },
+        "AAPL": {
+          "name": "Apple Inc.",
+          "currency": "USD",
+          "exchange": "NMS",
+          "marketTime": 1794241738000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740423,
+          "lastCandleSourceTime": 1794241680000,
+          "lastQuoteReceivedAt": 1794241740833,
+          "lastQuoteSourceTime": 1794241739000
+        }
+      },
+      "pollMs": 15000
+    }
+  },
+  "outageHealth": {
+    "ok": true,
+    "serverTime": 1794241744937,
+    "stats": {
+      "observations": 56183,
+      "revisions": 13998,
+      "receipts": 135669,
+      "duplicates": 79486,
+      "superseded": 0,
+      "lastReceiptId": 135669,
+      "candles": 8758,
+      "journalMode": "wal"
+    },
+    "feed": {
+      "stream": {
+        "state": "unavailable",
+        "detail": "Demonstration: upstream connections intentionally disconnected",
+        "lastReceivedAt": 1794241740833
+      },
+      "chart": {
+        "state": "unavailable",
+        "detail": "Demonstration: upstream connections intentionally disconnected",
+        "lastReceivedAt": 1794241740457
+      },
+      "paused": true,
+      "symbols": {
+        "BTC-USD": {
+          "name": "Bitcoin USD",
+          "currency": "USD",
+          "exchange": "CCC",
+          "marketTime": 1794241729000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740106,
+          "lastCandleSourceTime": 1794241680000
+        },
+        "ETH-USD": {
+          "name": "Ethereum USD",
+          "currency": "USD",
+          "exchange": "CCC",
+          "marketTime": 1794241735000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740211,
+          "lastCandleSourceTime": 1794241680000
+        },
+        "SPY": {
+          "name": "State Street SPDR S&P 500 ETF T",
+          "currency": "USD",
+          "exchange": "PCX",
+          "marketTime": 1794241737000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740311,
+          "lastCandleSourceTime": 1794241680000,
+          "lastQuoteReceivedAt": 1794241740458,
+          "lastQuoteSourceTime": 1794241739000
+        },
+        "AAPL": {
+          "name": "Apple Inc.",
+          "currency": "USD",
+          "exchange": "NMS",
+          "marketTime": 1794241738000,
+          "chartState": "unavailable",
+          "chartError": "Upstream intentionally disconnected for demonstration",
+          "lastChartReceivedAt": 1794241740423,
+          "lastCandleSourceTime": 1794241680000,
+          "lastQuoteReceivedAt": 1794241740833,
+          "lastQuoteSourceTime": 1794241739000
+        }
+      },
+      "pollMs": 15000
+    },
+    "demoControls": true,
+    "stack": {
+      "frontend": "Vue 3",
+      "backend": "FastAPI",
+      "database": "SQLite"
+    }
+  },
+  "replay": {
+    "symbol": "BTC-USD",
+    "receipts": 40159,
+    "until": 135669,
+    "candles": 360,
+    "mode": "recorded"
+  },
+  "after": {
+    "ok": true,
+    "serverTime": 1794241747701,
+    "stats": {
+      "observations": 56193,
+      "revisions": 14002,
+      "receipts": 135691,
+      "duplicates": 79498,
+      "superseded": 0,
+      "lastReceiptId": 135691,
+      "candles": 8762,
+      "journalMode": "wal"
+    },
+    "feed": {
+      "stream": {
+        "state": "streaming",
+        "detail": "Receiving Yahoo pricing messages",
+        "lastReceivedAt": 1794241747457
+      },
+      "chart": {
+        "state": "available",
+        "detail": "4/4 candle sources available",
+        "lastReceivedAt": 1794241747700
+      },
+      "paused": false,
+      "symbols": {
+        "BTC-USD": {
+          "name": "Bitcoin USD",
+          "currency": "USD",
+          "exchange": "CCC",
+          "marketTime": 1794241744000,
+          "chartState": "available",
+          "chartError": null,
+          "lastChartReceivedAt": 1794241747307,
+          "lastCandleSourceTime": 1794241740000
+        },
+        "ETH-USD": {
+          "name": "Ethereum USD",
+          "currency": "USD",
+          "exchange": "CCC",
+          "marketTime": 1794241745000,
+          "chartState": "available",
+          "chartError": null,
+          "lastChartReceivedAt": 1794241747417,
+          "lastCandleSourceTime": 1794241740000,
+          "lastQuoteReceivedAt": 1794241747457,
+          "lastQuoteSourceTime": 1794241745000
+        },
+        "SPY": {
+          "name": "State Street SPDR S&P 500 ETF T",
+          "currency": "USD",
+          "exchange": "PCX",
+          "marketTime": 1794241746000,
+          "chartState": "available",
+          "chartError": null,
+          "lastChartReceivedAt": 1794241747559,
+          "lastCandleSourceTime": 1794241740000,
+          "lastQuoteReceivedAt": 1794241747380,
+          "lastQuoteSourceTime": 1794241746000
+        },
+        "AAPL": {
+          "name": "Apple Inc.",
+          "currency": "USD",
+          "exchange": "NMS",
+          "marketTime": 1794241745000,
+          "chartState": "available",
+          "chartError": null,
+          "lastChartReceivedAt": 1794241747665,
+          "lastCandleSourceTime": 1794241740000
+        }
+      },
+      "pollMs": 15000
+    },
+    "demoControls": true,
+    "stack": {
+      "frontend": "Vue 3",
+      "backend": "FastAPI",
+      "database": "SQLite"
+    }
+  },
+  "integrity": "ok"
+}

@@ -1,6 +1,6 @@
 # Verification and evidence — required Vue/FastAPI stack
 
-Verified November 7, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLite. Locked dependency versions are in `requirements.txt` and `package-lock.json`. Node >=24 is frontend/launcher tooling and an independent evidence client; it is not the application backend. The earlier React/Express prototype is a disclosed revised approach in Git history.
+Verified November 7 and rechecked November 9, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLite. Locked dependency versions are in `requirements.txt` and `package-lock.json`. Node >=24 runs frontend tooling, the launcher, and an independent evidence client. The earlier React/Express prototype is a disclosed revised approach in Git history.
 
 ## Results
 
@@ -8,7 +8,7 @@ Verified November 7, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLi
 | --- | --- | --- |
 | Python behavioral and FastAPI integration tests | **30 passed, 0 failed** | [Actual pytest output](../evidence/test-results.txt), [tests](../tests/) |
 | Vue typecheck and production build | **Passed** | [Build output](../evidence/build-results.txt) |
-| Actual Yahoo → FastAPI WS → independent client → SQLite | **13 checks passed** | [Structured live verification](../evidence/live-verification.json), [run output](../evidence/live-run-results.txt), [repeatable client](../scripts/capture-evidence.js) |
+| Actual Yahoo → FastAPI WS → independent client → SQLite | **13 checks passed** on November 9 | [Current live check](../evidence/demo-live-verification.json), [November 7 check](../evidence/live-verification.json), [repeatable client](../scripts/capture-evidence.js) |
 | Existing-record preservation across migration | **Original immutable samples unchanged; schema v1; integrity `ok`** | [Preservation comparisons](../evidence/migration-preservation.json) |
 | Vue browser functionality and layout | **Passed** | [Browser QA](../evidence/browser-qa.json), [desktop](../evidence/live-dashboard.jpg), [responsive layout](../evidence/mobile-dashboard.jpg) |
 | Real upstream outage/recovery | **Passed** | [Unavailable feed](../evidence/feed-unavailable.jpg), live verification |
@@ -16,16 +16,16 @@ Verified November 7, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLi
 | Recorded playback/seek | **Passed** | [Replay screenshot](../evidence/recorded-replay.jpg), browser QA, exact replay reconstruction in live verification |
 | November 9 recording rehearsal | **Passed** on the updated production app | [Live chart, narrow ledger, replay, outage and recovery](../evidence/demo-readiness.json) |
 | Genuine recording import to isolated disk database | **Passed; integrity `ok`** | [Import smoke output](../evidence/import-results.txt), [recording](../evidence/btc-recording.json) |
-| Fresh-clone install/test/build/import and production HTTP/WS | **Passed** (29 tests; required stack; isolated database) | [Redacted clean-checkout results](../evidence/clean-checkout.json) |
+| Fresh-clone install/test/build/import and production HTTP/WS | **Passed**, including 30 tests and isolated SQLite | [Redacted clean-checkout results](../evidence/clean-checkout.json) |
 | Student-recorded demonstration/process video | **Recording/link pending**; generated demo withdrawn at user request | [Speaking script and screen actions](part-4-1-speaking-script.md) |
 
 ## Live evidence boundaries
 
-The final live verification began at **2026-11-07 19:48:18 UTC (2:48:18 PM Eastern)**. At its recovery checkpoint SQLite held **4,259 observations, 318 revisions, 33,893 receipts, 29,634 duplicate receipts, and 3,160 accepted candles**. These are actual captured counts, not hardcoded UI values. Captures from different times naturally have different counts/prices.
+The November 9 live verification used the updated app on an isolated local server with a copy of the existing SQLite history. It collected genuine new Yahoo quotes and candles and passed all 13 checks. The independent client replayed **40,159 BTC receipts** and exactly reconstructed the **360 persisted chart candles** during the outage. The [November 7 run](../evidence/live-verification.json) provides earlier evidence and the basis for the bundled replay recording.
 
 The independent client asserts the running **Vue 3 / FastAPI / SQLite** stack, receives a genuine fresh Yahoo quote and an **applied candle update** through a real network WebSocket, and checks the quote's source timestamp. It queries the same observation IDs through an independent read-only SQLite connection and compares provider identity/time and quote/candle values. This establishes persistence-before-broadcast without relying on a screenshot alone. Vue/TradingView rendering is separately established by actual browser captures.
 
-During the deliberate real upstream pause, both channels became unavailable, the observation count stopped growing, and existing candles stayed queryable. Actual Yahoo collection resumed after reconnection. Replay folded **12,444 BTC receipts** through the frozen global receipt watermark **33,876**, reconstructing all **360 displayed candles** exactly (IDs, closes, volume, completeness) without writes. SQLite integrity was `ok`.
+During the deliberate upstream pause, both channels became unavailable, the observation count stopped growing, and existing candles stayed queryable. Yahoo collection resumed after reconnection. Replay reconstructed candle IDs, closes, volume, and completeness without writing records. SQLite integrity was `ok`.
 
 No naturally out-of-order response happened during this capture. Out-of-order arrivals, malformed messages, HTTP 429, and timing races are tested with explicitly injected inputs. Those checks establish deterministic application behavior, not external provider availability or complete exchange coverage.
 
@@ -46,7 +46,7 @@ The [curated log](evidence-log.md) connects instructions, generated code, observ
 
 Run `.venv/bin/python -m scripts.verify_clean_checkout` after committing a candidate. It creates a **fresh Git clone with `--no-local`**, confirms ignored runtime files are absent, creates a new Python environment, installs locked dependencies, runs `npm ci`, tests and the Vue build, initializes/imports an isolated database, and starts a real production FastAPI server to check HTTP and WebSocket snapshot/replay access. It records the exact tested source commit and redacted command results in [clean-checkout.json](../evidence/clean-checkout.json). This check does not claim live Yahoo availability; live-provider evidence is separate above.
 
-The clean checkout passed in **31.61 seconds** at source commit `5f0a4bae6aab21faae3ceb5acd8df3f5056017ef`: all five ignored runtime paths were absent, nine command stages succeeded, 29 tests and the Vue build passed, and a real production FastAPI HTTP/WebSocket smoke returned the required stack with 360 retrievable candles and recorded replay. The final implementation/evidence commit adds this result and documentation; application source remains unchanged from that tested candidate. [GitHub Actions](../.github/workflows/checks.yml) runs Python tests, Vue typechecking/build, and isolated recording import on every push/PR. Configured checks are not described as remotely passed unless an actual successful run is observed; the report distinguishes the observed remote status.
+The clean checkout passed in **31.03 seconds** at source commit `31c69e001ee6f68f56526d458332f79ee80aa1d8`. All five ignored runtime paths were absent, nine command stages succeeded, 30 tests and the Vue build passed, and the production HTTP/WebSocket smoke returned the required stack with 360 retrievable candles and recorded replay. The following commit captures these results. [GitHub Actions](../.github/workflows/checks.yml) runs Python tests, Vue typechecking and build, and isolated recording import on pushes and pull requests.
 
 ## Student-recorded video pending
 
