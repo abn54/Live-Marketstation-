@@ -1,56 +1,35 @@
-# Part 4.1 — your spoken demonstration
+# Part 4.1 recording script
 
-Aim for **50–60 seconds**, with your own voice and the working app on screen. This is one combined demonstration/process video. The directions below are not spoken lines.
+Read the quoted lines **word for word**. Follow the click cues silently while you speak. Start on **BTC-USD → Live** with **Yahoo source live** visible. Aim for **50–58 seconds** in one recording.
 
-## What to say
+### 0–12 seconds · Live chart
 
-> This is my Part 4.1 market workstation, using Vue, FastAPI, and SQLite.
->
-> Yahoo Finance streams live quotes. One-minute candles and volume refresh every fifteen seconds. The source, age, and feed status are visible.
->
-> The ledger preserves observation IDs, source and receipt times, revisions, and candle completeness. Duplicates get separate receipts; older responses cannot overwrite newer data.
->
-> Updates commit to SQLite before broadcasting over WebSockets.
->
-> Replay reads stored observations without changing the database.
->
-> Disconnecting Yahoo marks the feed unavailable while keeping the chart. Reconnecting restores live collection.
->
-> A TLS failure was fixed using trusted certificates. Thirty automated tests and thirteen live checks passed.
->
-> Yahoo can be delayed or rate limited. My report links the repository, commit, disclosure, and evidence.
+Point to the candles, the volume bars at the bottom of the chart, and **Feed health** on the right.
 
-## What to show while speaking
+> Yahoo Finance streams live Bitcoin quotes. TradingView shows one-minute candles and volume, refreshed every fifteen seconds. Feed health shows the source, data age, and status.
 
-| Approximate time | On-screen action |
-| --- | --- |
-| 0–12s | Start with **BTC-USD** and **Live** selected. Show the moving quote, candlesticks/volume, and **Feed health** source/age/status. |
-| 12–27s | Click **View observation ledger** in the left rail or SQLite panel. Point to receipt and observation IDs, the two times, and a candle row with its revision and state. Click **Data pipeline** next to the ledger. |
-| 27–35s | Click **Recorded replay** in the left rail. It jumps to the chart and starts playback. Point to **RECORDED** and the advancing receipt position beneath the chart. |
-| 35–47s | Click **Live**, then **Demonstrate feed outage** beside the chart. Show **Yahoo unavailable · saved chart** with the candles still visible. Click **Reconnect Yahoo feed**. |
-| 47–60s | While genuine quotes resume, say the failure, verification, and limitation lines. End with the dashboard or report/evidence links. |
+### 12–25 seconds · SQLite and the data path
 
-Rehearse once and keep the final recording between **30 seconds and 1 minute**. The script is approximately 120 written words, depending on how numbers/acronyms are spoken. Use a natural pace and do not spend extra seconds reading the interface labels aloud.
+Click **View observation ledger**. Point at a candle row marked **forming** or **complete**, with a revision such as **v2**. Click **Data pipeline** beside the ledger as you say the second sentence.
 
-## Prepare the app
+> The ledger shows observation IDs, source and receipt times, revisions, and candle completion. FastAPI saves updates in SQLite before sending them to Vue over WebSockets, so chart updates are traceable.
 
-Choose BTC-USD and wait for **LIVE FEED** before recording. A wide browser window puts the chart and Feed health next to each other. The outage button beside the chart requires demo controls. For a future restart, stop the existing server first, then run:
+### 25–40 seconds · Duplicates, revisions, and replay
 
-```sh
-ENABLE_DEMO_CONTROLS=true npm start
-```
+Click the clock icon in the left sidebar, labeled **Recorded replay**. Point to the **RECORDED** label and the counter advancing below the chart.
 
-Use `npm run dev` instead of `npm start` if you are developing. The production build and dependencies are already prepared in this workspace. If the server has just reconnected, allow the next actual pricing message to arrive; a waiting status during reconnection is expected.
+> Duplicates get separate receipts. Changed values create revisions. Older responses arriving late cannot overwrite newer data. Tests cover all three. Replay reads saved records in receipt order.
 
-## Rubric coverage
+### 40–58 seconds · Outage and recovery
 
-- **Functionality/integration:** live Yahoo → FastAPI → SQLite → WebSocket → Vue chart, plus replay and outage/recovery.
-- **Comprehension/correctness:** source versus receipt time, revisions/completeness, duplicate and out-of-order rules, and commit before broadcast.
-- **Process/verification:** one actual revised approach (TLS trusted-root fix), recorded tests/live checks, and supporting evidence/disclosure.
-- **Testability/limits/UX:** clean-checkout verification, visible age/failure states, and Yahoo delay/rate-limit limitations.
+Click **Live**, then **Demonstrate feed outage** beside the chart. Point to **Yahoo unavailable · saved chart** and the candles still on screen.
 
-The script does not claim indicators, trading, backtesting, chatbot, vision, or live-audio AI; these are later assignment parts. It does not claim that you personally ran the agent's checks or independently authored every generated line. Read the linked design and evidence notes so you can explain these statements in your own words.
+> I’m disconnecting Yahoo to demonstrate an outage. The feed shows unavailable, and the saved candles stay visible. I’ll reconnect now.
 
-## After you record
+Click **Reconnect Yahoo feed**. When **Yahoo source live** returns, say:
 
-Upload your video somewhere the instructor can access, add its actual link to `report.md`, and check that it plays without requiring access the instructor does not have. **Only `report.md` goes to Canvas.** The generated narrated demo was withdrawn at your request; there is no replacement video link yet.
+> A fresh quote confirms recovery.
+
+## What the report covers
+
+The spoken SQLite sentence explains the design decision required by Section 6. The report and its linked evidence cover the detailed test results, setup and schema, the TLS failure and fix, the public GitHub commit, AI disclosure, the evidence log, and limitations. Once you have your 30–60 second recording, send the accessible video link for the report.
