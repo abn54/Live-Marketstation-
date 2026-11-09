@@ -78,6 +78,10 @@ The client reconnects to its server every 1.5 seconds after disconnect. Live dat
 
 `GET /api/replay?symbol=BTC-USD&after=0&limit=2000` freezes `until` to the current global last receipt ID. Pass that `until` with every following page; `nextAfter` is a global receipt cursor, not an offset within a symbol. Records include original receipt times, dispositions, `applied`, and immutable content. Folding applied records in receipt order reconstructs the as-observed accepted state; duplicates and superseded revisions remain inspectable. The browser plays at explicit receipts/second, not original wall-clock cadence. Seeking reconstructs the state from the log. No replay operation writes market records. Live collection continues independently.
 
+The Vue player uses `GET /api/replay/recent?symbol=BTC-USD`. One read returns a watermark, up to 800 recent receipts for the selected symbol, and an as-of checkpoint with the latest quote and up to 360 candle heads before the window. SQLite builds that checkpoint from applied receipts before the first returned receipt. Vue seeds playback with the checkpoint and applies the window in receipt order. This keeps the initial chart visible and bounds the browser workload as SQLite history grows. The original paginated endpoint serves older receipts.
+
+Each new Yahoo pricing connection clears per-symbol quote freshness metadata. The live chart can retain its previous quote while the feed reconnects, and the live badge requires a pricing receipt for the selected symbol on the new socket. The demo control beside the chart and the narrow ledger layout keep outage status and persisted receipt details visible during the recording.
+
 Other read routes: `/api/health`, `/api/candles?symbol=...`, `/api/receipts?symbol=...`, `/api/events`. Symbol selection is allowlisted (invalid symbols return 400); typed, bounded FastAPI query/body validation rejects invalid pagination/actions with 422. Unknown API routes return JSON 404.
 
 ## Freshness and failures

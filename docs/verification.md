@@ -6,7 +6,7 @@ Verified November 7, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLi
 
 | Verification | Result | Evidence |
 | --- | --- | --- |
-| Python behavioral and FastAPI integration tests | **29 passed, 0 failed** | [Actual pytest output](../evidence/test-results.txt), [tests](../tests/) |
+| Python behavioral and FastAPI integration tests | **30 passed, 0 failed** | [Actual pytest output](../evidence/test-results.txt), [tests](../tests/) |
 | Vue typecheck and production build | **Passed** | [Build output](../evidence/build-results.txt) |
 | Actual Yahoo → FastAPI WS → independent client → SQLite | **13 checks passed** | [Structured live verification](../evidence/live-verification.json), [run output](../evidence/live-run-results.txt), [repeatable client](../scripts/capture-evidence.js) |
 | Existing-record preservation across migration | **Original immutable samples unchanged; schema v1; integrity `ok`** | [Preservation comparisons](../evidence/migration-preservation.json) |
@@ -14,6 +14,7 @@ Verified November 7, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLi
 | Real upstream outage/recovery | **Passed** | [Unavailable feed](../evidence/feed-unavailable.jpg), live verification |
 | Closed-market freshness and final-bar completeness | **Passed** | [SPY stale but completed interval](../evidence/market-closed.jpg), ended-final-minute regression test |
 | Recorded playback/seek | **Passed** | [Replay screenshot](../evidence/recorded-replay.jpg), browser QA, exact replay reconstruction in live verification |
+| November 9 recording rehearsal | **Passed** on the updated production app | [Live chart, narrow ledger, replay, outage and recovery](../evidence/demo-readiness.json) |
 | Genuine recording import to isolated disk database | **Passed; integrity `ok`** | [Import smoke output](../evidence/import-results.txt), [recording](../evidence/btc-recording.json) |
 | Fresh-clone install/test/build/import and production HTTP/WS | **Passed** (29 tests; required stack; isolated database) | [Redacted clean-checkout results](../evidence/clean-checkout.json) |
 | Student-recorded demonstration/process video | **Recording/link pending**; generated demo withdrawn at user request | [Speaking script and screen actions](part-4-1-speaking-script.md) |
@@ -59,6 +60,6 @@ Add the student's actual accessible link to report.md before submitting. There i
 
 Both development proxying and the production Vue build served by FastAPI were exercised. Browser checks covered chart/volume, symbols, data path/ledger, actual outage/recovery, playback/pause/speed/seek, returning to live, refresh restoration, and stale equities with completed last intervals. Desktop was 1440×1080; the optional 390×844 responsive check had document width 390. No production console errors were observed after the recorded production reload. This is a browser layout check, not a mobile build.
 
-Yahoo is unofficial and can be delayed, sparse, revised, unavailable, or rate limited. Candles are polled every 15 seconds; pricing messages are not a complete trade tape. Completion means the interval had ended at fetch time, not provider-certified finality. After the one-day bootstrap, three-minute overlap polling may miss older corrections until another full backfill. Gaps are not filled. SQLite has no automatic retention policy; the chart shows 360 bars and browser replay is bounded to 200,000 receipts per symbol. Playback speed is receipts/second rather than original wall-clock cadence.
+Yahoo can be delayed, sparse, revised, unavailable, or rate limited. Candles are polled every 15 seconds. Completion records whether the interval had ended when the server fetched it. After the one-day bootstrap, three-minute overlap polling may miss older corrections until another full backfill. SQLite retains the receipt log without automatic retention. The chart loads up to 360 bars. Browser replay plays up to 800 recent receipts from a saved checkpoint at receipts per second. The full log is available through the paginated API.
 
 This is Part 4.1 only: no indicators, trading, account results, model/chat/vision/live-audio integration, deployment, or mobile build is claimed. The full overview was supplied by the user, resolving the earlier authentication/readability gap. Canvas upload remains a student action; **only `report.md`** is uploaded, linking public source/commit, support documents, and the single combined video.

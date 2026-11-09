@@ -173,6 +173,11 @@ class YahooFeed:
 
     async def stream_loop(self):
         while not self.stopped and not self.paused:
+            # A quote from the prior socket cannot establish that this symbol
+            # has received data on the newly connected socket.
+            for meta in self.symbols.values():
+                meta.pop("lastQuoteReceivedAt", None)
+                meta.pop("lastQuoteSourceTime", None)
             await self.set_status("stream", "connecting", "Connecting to Yahoo Finance")
             subscription = None
             try:

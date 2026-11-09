@@ -1,0 +1,39 @@
+{
+  "checkedAt": "2026-11-09T16:27:55Z",
+  "environment": "Rebuilt Vue production app in the in-app browser on 127.0.0.1:3000, with genuine Yahoo data and the existing SQLite database",
+  "live": {
+    "symbol": "BTC-USD",
+    "status": "LIVE FEED",
+    "stream": "streaming",
+    "chartEndpoint": "available",
+    "candlestickAndVolumeCanvasRendered": true,
+    "sourceAndReceiptAgesVisible": true,
+    "consoleErrorsObserved": 0
+  },
+  "ledgerAt556CssPixels": {
+    "tableClientWidth": 449,
+    "tableScrollWidth": 449,
+    "visible": ["receipt ID", "observation ID", "source", "source time", "receipt time", "revision", "state"],
+    "observedStates": ["forming · revised", "complete · duplicate"],
+    "pipeline": ["Yahoo Finance", "SQLite commit", "FastAPI WebSocket", "Vue live chart"]
+  },
+  "replay": {
+    "earlierBrowserRunMs": 2534,
+    "updatedBrowserRunMs": 1106,
+    "timingNote": "Single local browser observations. The earlier run loaded roughly 40,000 BTC receipts. The updated run loaded 800 and the as-of checkpoint.",
+    "windowReceipts": 800,
+    "recordedWatermarkVisible": true,
+    "chartVisibleAtRestart": true,
+    "playbackAdvanced": true,
+    "pausedAndSoughtToEnd": true
+  },
+  "outage": {
+    "intentional": true,
+    "unavailableChannels": 2,
+    "retainedChartVisible": true,
+    "retainedQuoteSourceTime": "2026-11-09T16:27:29Z",
+    "recoveredQuoteSourceTime": "2026-11-09T16:27:39Z",
+    "recoveredBrowserStatusMs": 1211
+  },
+  "handoff": "Returned to BTC-USD live mode with chart, volume, feed health, ledger shortcut, replay, and outage control available. The student records the video."
+}

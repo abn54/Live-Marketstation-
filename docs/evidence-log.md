@@ -66,3 +66,11 @@ These are selected decision records, not a complete chat export. Prompt excerpts
 - **Instruction excerpt:** “create me a script ... ill say”.
 - **Decision/artifacts:** Remove the generated MP4, synthetic-narration transcript, video metadata, and assembler from the current tree/report. Preserve application code, genuine market recordings/replay, screenshots, tests, and disclosure. Add `docs/part-4-1-speaking-script.md` with spoken wording, timed screen actions, and rubric coverage.
 - **Verification/boundary:** Check that active documentation no longer links the withdrawn video and that the report explicitly awaits the student's actual accessible recording link. No replacement media or fabricated link is created. Ordinary Git history is retained. The script itself does not satisfy the required video submission.
+
+## 9. Recording rehearsal and replay responsiveness
+
+- **Instruction excerpt:** “make sure everyhting taht i eed to show works well”.
+- **Observation:** At 556 CSS pixels, the ledger hid its revision and state columns offscreen. The browser loaded about 40,000 BTC receipts and took about 2.5 seconds to enter replay in one local run. The outage control was in the footer, away from the chart.
+- **Decision and code:** `MarketStore.recent_replay` builds the chart checkpoint from accepted receipts before an 800-receipt window. The browser replays that window and the full log stays available through the existing API. Vue shows the revision and state in narrow ledger rows and places the outage action beside the chart. Reconnect waits for a receipt on the new Yahoo socket for the selected symbol.
+- **Verification:** The [browser rehearsal](../evidence/demo-readiness.json) observed revised and duplicate candle rows at the original narrow width. Replay opened in about 1.1 seconds in the updated local run and kept the chart visible at restart. The intentional outage retained the chart. After reconnect, the live badge returned with a new source timestamp. The API regression test checks the checkpoint and window against persisted heads, including superseded and duplicate receipts.
+- **Uncertainty:** The timings are local observations. Yahoo's next pricing message and candle update can take longer during another recording.

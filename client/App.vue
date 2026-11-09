@@ -69,12 +69,19 @@ const connected = ref(false),
   help = ref(false),
   tab = ref<"observations" | "pipeline">("observations"),
   error = ref(""),
-  busy = ref(false);
+  replayLoading = ref(false),
+  feedPending = ref(false);
+const chartPanel = ref<HTMLElement | null>(null),
+  evidencePanel = ref<HTMLElement | null>(null);
 const records = shallowRef<ReplayRecord[]>([]),
+  checkpoint = shallowRef<Pick<SymbolData, "candles" | "quote">>({
+    candles: [],
+    quote: null,
+  }),
   cursor = ref(0),
   playing = ref(false),
   speed = ref(4);
-let replayGeneration = 0,
+let replayRequest: AbortController | undefined,
   disposed = false,
   socket: WebSocket | undefined,
   reconnectTimer: ReturnType<typeof setTimeout> | undefined,
@@ -119,10 +126,9 @@ function connect() {
     `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/ws`,
   );
   socket = current;
-  current.onopen = () => {
-    if (current === socket) connected.value = true;
-  };
+  const snapshotTimer = setTimeout(() => current.close(), 10000);
   current.onclose = () => {
+    clearTimeout(snapshotTimer);
     if (current !== socket) return;
     connected.value = false;
     if (!disposed) reconnectTimer = setTimeout(connect, 1500);
@@ -134,10 +140,12 @@ function connect() {
     if (m.status) feed.value = m.status;
     if (m.stats) stats.value = m.stats;
     if (m.type === "snapshot") {
+      clearTimeout(snapshotTimer);
       demo.value = m.demoControls;
       data.value = Object.fromEntries(
         m.symbols.map((s: SymbolData) => [s.symbol, s]),
       );
+      connected.value = true;
     }
     if (m.type === "observations") {
       const next = { ...data.value };
@@ -168,6 +176,7 @@ onMounted(() => {
 });
 onUnmounted(() => {
   disposed = true;
+  replayRequest?.abort();
   clearTimeout(reconnectTimer);
   clearInterval(clockTimer);
   socket?.close();
@@ -210,31 +219,29 @@ watch([cursor, () => records.value.length], () => {
   if (cursor.value >= records.value.length) playing.value = false;
 });
 const replayData = computed(() => {
-  const heads = new Map<string, Observation>();
-  let quote: Observation | null = null;
-  const recent: Receipt[] = [];
+  const heads = new Map(checkpoint.value.candles.map((o) => [o.logicalId, o]));
+  let quote = checkpoint.value.quote;
   for (const r of records.value.slice(0, cursor.value)) {
     const o = r.observation;
-    if (r.applied) {
-      heads.set(o.logicalId, o);
-      if (o.kind === "quote" && (!quote || o.sourceTime >= quote.sourceTime))
-        quote = o;
-    }
-    recent.push({
-      ...o,
-      receiptId: r.receiptId,
-      receiptTime: r.receivedAt,
-      disposition: r.disposition,
-    });
+    if (!r.applied) continue;
+    if (o.kind === "candle") heads.set(o.logicalId, o);
+    else if (!quote || o.sourceTime >= quote.sourceTime) quote = o;
   }
   return {
     symbol: selected.value,
     candles: [...heads.values()]
-      .filter((o) => o.kind === "candle")
       .sort((a, b) => a.sourceTime - b.sourceTime)
       .slice(-360),
     quote,
-    receipts: recent.slice(-12).reverse(),
+    receipts: records.value
+      .slice(Math.max(0, cursor.value - 12), cursor.value)
+      .reverse()
+      .map((r) => ({
+        ...r.observation,
+        receiptId: r.receiptId,
+        receiptTime: r.receivedAt,
+        disposition: r.disposition,
+      })),
   };
 });
 const live = computed(
@@ -301,46 +308,37 @@ const ohlc = computed(
     ] as const,
 );
 async function startReplay() {
-  busy.value = true;
+  if (replayLoading.value) return;
+  replayLoading.value = true;
   error.value = "";
   playing.value = false;
-  const generation = ++replayGeneration,
-    symbol = selected.value;
+  const request = new AbortController();
+  replayRequest = request;
   try {
-    let after = 0,
-      until: number | undefined;
-    const all: ReplayRecord[] = [];
-    for (let page = 0; page < 100; page++) {
-      const r = await fetch(
-        `/api/replay?symbol=${symbol}&after=${after}&limit=2000${until === undefined ? "" : `&until=${until}`}`,
-      );
-      if (!r.ok) throw new Error("Replay could not be loaded");
-      const d = await r.json();
-      until = d.until;
-      all.push(...d.records);
-      after = d.nextAfter;
-      if (d.done) break;
-      if (page === 99)
-        throw new Error(
-          "Recording exceeds browser replay limit; use the paginated API",
-        );
-    }
-    if (generation !== replayGeneration) return;
-    if (!all.length)
+    const r = await fetch(`/api/replay/recent?symbol=${selected.value}`, {
+      signal: request.signal,
+    });
+    if (!r.ok) throw new Error("Replay could not be loaded");
+    const recording = await r.json();
+    if (replayRequest !== request) return;
+    if (!recording.records.length)
       throw new Error("No recorded observations for this symbol yet");
-    records.value = all;
-    cursor.value = Math.max(0, all.length - 80);
+    checkpoint.value = recording.checkpoint;
+    records.value = recording.records;
+    cursor.value = Math.max(0, records.value.length - 80);
     mode.value = "replay";
     playing.value = true;
-    fitKey.value++;
   } catch (e) {
-    if (generation === replayGeneration) error.value = (e as Error).message;
+    if (replayRequest === request) error.value = (e as Error).message;
   } finally {
-    if (generation === replayGeneration) busy.value = false;
+    if (replayRequest === request) {
+      replayRequest = undefined;
+      replayLoading.value = false;
+    }
   }
 }
 async function toggleFeed() {
-  busy.value = true;
+  feedPending.value = true;
   error.value = "";
   try {
     const r = await fetch("/api/demo/feed", {
@@ -352,26 +350,35 @@ async function toggleFeed() {
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error ?? "Feed control failed");
-    feed.value = d.feed;
+    // While connected, WebSocket events deliver feed status in server order.
+    if (!connected.value) feed.value = d.feed;
   } catch (e) {
     error.value = (e as Error).message;
   } finally {
-    busy.value = false;
+    feedPending.value = false;
   }
 }
 function choose(symbol: string) {
   selected.value = symbol;
-  mode.value = "live";
-  playing.value = false;
+  goLive();
   records.value = [];
+  checkpoint.value = { candles: [], quote: null };
   cursor.value = 0;
   error.value = "";
-  replayGeneration++;
-  busy.value = false;
 }
 function goLive() {
+  replayRequest?.abort();
+  replayRequest = undefined;
+  replayLoading.value = false;
   mode.value = "live";
   playing.value = false;
+}
+function showChart() {
+  chartPanel.value?.scrollIntoView({ block: "start" });
+}
+function showEvidence(view: typeof tab.value) {
+  tab.value = view;
+  evidencePanel.value?.scrollIntoView({ block: "start" });
 }
 function toggleReplay() {
   if (cursor.value >= records.value.length) cursor.value = 0;
@@ -393,6 +400,7 @@ function toggleReplay() {
         @click="
           goLive();
           tab = 'observations';
+          showChart();
         "
       >
         <ChartCandlestick :size="21" />
@@ -401,15 +409,27 @@ function toggleReplay() {
         class="rail-button"
         title="Recorded replay"
         aria-label="Recorded replay"
-        @click="startReplay"
+        :disabled="replayLoading"
+        @click="
+          showChart();
+          startReplay();
+        "
       >
         <FileClock :size="21" />
       </button>
       <button
         class="rail-button"
+        title="View observation ledger"
+        aria-label="View observation ledger"
+        @click="showEvidence('observations')"
+      >
+        <Activity :size="21" />
+      </button>
+      <button
+        class="rail-button"
         title="Data pipeline"
         aria-label="Data pipeline"
-        @click="tab = 'pipeline'"
+        @click="showEvidence('pipeline')"
       >
         <Database :size="21" />
       </button>
@@ -511,7 +531,7 @@ function toggleReplay() {
           </button>
         </div>
         <div class="dashboard-grid">
-          <section class="panel chart-panel">
+          <section ref="chartPanel" class="panel chart-panel">
             <div class="instrument-header">
               <div class="instrument-title">
                 <h2>{{ names[selected] }}<span>/ USD</span></h2>
@@ -525,12 +545,23 @@ function toggleReplay() {
                   <Radio :size="13" />Live</button
                 ><button
                   :class="{ on: mode === 'replay' }"
-                  :disabled="busy"
+                  :disabled="replayLoading"
                   @click="startReplay"
                 >
-                  <FileClock :size="13" />Replay
+                  <FileClock :size="13" />{{ replayLoading ? "Loading…" : "Replay" }}
                 </button>
               </div>
+            </div>
+            <div v-if="demo" class="demo-bar">
+              <span :class="{ amber: !collectorGood }" aria-live="polite">{{
+                feedUnavailable ? "Yahoo unavailable · saved chart" :
+                collectorGood ? "Yahoo source live" : "Waiting for Yahoo"
+              }}</span>
+              <button :disabled="feedPending || !connected" @click="toggleFeed">
+                <Wifi v-if="feed.paused" :size="13" /><Unplug v-else :size="13" />{{
+                  feed.paused ? "Reconnect Yahoo feed" : "Demonstrate feed outage"
+                }}
+              </button>
             </div>
             <div class="price-row">
               <strong class="big-price">${{ money(price) }}</strong
@@ -592,7 +623,7 @@ function toggleReplay() {
               <div v-if="!shown.candles.length" class="chart-empty">
                 <ChartCandlestick :size="28" /><strong>{{
                   mode === "replay"
-                    ? "Recorded playback ready"
+                    ? "Waiting for the first recorded candle"
                     : "Waiting for Yahoo candles"
                 }}</strong
                 ><span>{{
@@ -643,7 +674,7 @@ function toggleReplay() {
                 :max="records.length"
                 v-model.number="cursor"
                 @input="playing = false"
-              /><span>{{ cursor }} / {{ records.length }}</span
+              /><span :title="`${records.length} recent saved receipts`">{{ cursor }} / {{ records.length }}</span
               ><select aria-label="Replay speed" v-model.number="speed">
                 <option :value="1">1 receipt/s</option>
                 <option :value="4">4 receipts/s</option>
@@ -769,10 +800,8 @@ function toggleReplay() {
                   >WAL</span
                 >
               </div>
-              <button class="full-button" :disabled="busy" @click="startReplay">
-                <FileClock :size="14" />{{
-                  busy ? "Loading…" : "Explore recorded data"
-                }}<ChevronRight :size="15" />
+              <button class="full-button" @click="showEvidence('observations')">
+                <Activity :size="14" />View observation ledger<ChevronRight :size="15" />
               </button>
             </section>
             <section class="session-note">
@@ -786,7 +815,7 @@ function toggleReplay() {
             </section>
           </aside>
         </div>
-        <section class="panel evidence-panel">
+        <section ref="evidencePanel" class="panel evidence-panel">
           <div class="evidence-tabs">
             <div>
               <button
@@ -810,7 +839,7 @@ function toggleReplay() {
             }}</span>
           </div>
           <div v-if="tab === 'observations'" class="table-scroll">
-            <table>
+            <table role="table" aria-label="Observation ledger">
               <thead>
                 <tr>
                   <th>RECEIPT / IDENTITY</th>
@@ -828,23 +857,23 @@ function toggleReplay() {
                     <span class="receipt-number">#{{ r.receiptId }}</span
                     ><span :title="r.logicalId" class="identity"
                       >{{ r.symbol }} · {{ r.interval }}</span
-                    >
+                    ><span class="observation-number">Obs. #{{ r.id }}</span>
                   </td>
-                  <td>
+                  <td data-label="Source">
                     <span class="source-cell"
                       ><span class="dot muted-dot" />{{ r.source }}</span
                     >
                   </td>
-                  <td :title="iso(r.sourceTime)">{{ time(r.sourceTime) }}</td>
-                  <td :title="iso(r.receiptTime)">{{ time(r.receiptTime) }}</td>
-                  <td>${{ money(r.price ?? r.close) }}</td>
-                  <td>
+                  <td data-label="Source time" :title="iso(r.sourceTime)">{{ time(r.sourceTime) }}</td>
+                  <td data-label="Received" :title="iso(r.receiptTime)">{{ time(r.receiptTime) }}</td>
+                  <td data-label="Value">${{ money(r.price ?? r.close) }}</td>
+                  <td data-label="Revision">
                     <span class="revision">v{{ r.revision }}</span>
                   </td>
                   <td>
                     <span :class="['disposition', r.disposition]"
                       >{{
-                        r.kind === "candle" && !r.complete ? "forming · " : ""
+                        r.kind === "candle" ? (r.complete ? "complete · " : "forming · ") : ""
                       }}{{ r.disposition }}</span
                     >
                   </td>
@@ -894,14 +923,7 @@ function toggleReplay() {
             Recorded faithfully.</span
           >
           <div>
-            <button v-if="demo" :disabled="busy" @click="toggleFeed">
-              <Wifi v-if="feed.paused" :size="12" /><Unplug
-                v-else
-                :size="12"
-              />{{
-                feed.paused ? "Reconnect Yahoo feed" : "Demonstrate feed outage"
-              }}</button
-            ><a
+            <a
               href="https://www.tradingview.com/"
               target="_blank"
               rel="noreferrer"

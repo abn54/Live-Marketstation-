@@ -17,7 +17,7 @@ Implement Assignment 4 Part 4.1 only: genuine Yahoo live data, Vue 3 frontend, P
 - Preserve logical provider identity, source/receipt times, immutable revisions, every duplicate receipt, and candle completeness. Keep original source time separate from local receipt order.
 - Commit observation, head, and receipt atomically before broadcast. A newer duplicate advances the ordering watermark. Older request responses cannot overwrite newer accepted heads.
 - Keep OHLCV/volume from Yahoo Chart. Do not infer minute volume from daily/rolling quote volume; unknown volume is null, reported zero is zero, gaps are not filled.
-- Replay is read-only, frozen at a receipt watermark, and applies only records with `applied=true`. Live collection remains independent.
+- Replay is read-only, frozen at a receipt watermark, and applies only records with `applied=true`. Browser replay uses a bounded recent window and a checkpoint computed from applied receipts before that window. Keep the full paginated history available. Live collection remains independent.
 - Demo outage controls are opt-in, same-origin, stop real collection, retain history, and ignore prior-generation responses. Reconnect is idempotent.
 - Update README, design notes, verification notes, AI-USE.md, and the curated evidence log when behavior, dependencies, tooling, or requirements change.
 

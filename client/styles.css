@@ -638,6 +638,31 @@ h1 {
   border-radius: 2px;
   margin-left: 4px;
 }
+.chart-panel,
+.evidence-panel {
+  scroll-margin-top: 12px;
+}
+.demo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 9px 16px 0;
+  padding: 6px 9px;
+  border: 1px solid #344831;
+  border-radius: 6px;
+  color: var(--green);
+  font-size: 10px;
+}
+.demo-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #263828;
+  border-radius: 4px;
+  padding: 5px 8px;
+}
 .right-stack {
   display: flex;
   flex-direction: column;
@@ -935,6 +960,11 @@ td:first-child {
   font-family: monospace;
   font-size: 8px;
 }
+.observation-number {
+  margin-left: 7px;
+  color: #a7b69c;
+  font: 8px monospace;
+}
 .identity {
   color: #bbccb0;
   font-size: 9px;
@@ -1030,15 +1060,6 @@ td:first-child {
 }
 .page-footer a:hover {
   color: #c3ef96;
-}
-.page-footer button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: none;
-  color: #a8bd95;
-  padding: 0;
-  font-size: 8px;
 }
 .replay-controls {
   display: flex;
@@ -1301,6 +1322,53 @@ td:first-child {
     gap: 13px;
   }
 }
+@media (max-width: 720px) {
+  .table-scroll table,
+  .table-scroll tbody {
+    display: block;
+  }
+  .table-scroll thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .table-scroll tbody tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: "identity identity state" "source-time receipt-time value" "provider revision revision";
+    gap: 8px 5px;
+    padding: 11px 10px;
+    border-bottom: 1px solid #263028;
+  }
+  .table-scroll td {
+    padding: 0;
+    border: 0;
+  }
+  .table-scroll td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    color: #8da081;
+    font: 8px "DM Sans", sans-serif;
+  }
+  .table-scroll td:first-child { grid-area: identity; }
+  .table-scroll td:nth-child(2) { grid-area: provider; }
+  .table-scroll td:nth-child(3) { grid-area: source-time; }
+  .table-scroll td:nth-child(4) { grid-area: receipt-time; }
+  .table-scroll td:nth-child(5) { grid-area: value; }
+  .table-scroll td:nth-child(6) { grid-area: revision; }
+  .table-scroll td:nth-child(7) {
+    grid-area: state;
+    text-align: right;
+    white-space: normal;
+  }
+  .table-scroll td.empty-ledger {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+}
 @media (max-width: 500px) {
   main {
     padding: 23px 14px 0;
@@ -1480,8 +1548,7 @@ td:first-child {
     flex-wrap: wrap;
     justify-content: flex-end;
   }
-  .page-footer a,
-  .page-footer button {
+  .page-footer a {
     font-size: 7px;
   }
   .replay-controls {

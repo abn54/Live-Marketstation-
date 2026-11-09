@@ -184,6 +184,13 @@ def create_app(
             done=len(records) < limit,
         )
 
+    @app.get("/api/replay/recent")
+    def recent_replay(symbol: str, limit: int = Query(800, ge=1, le=2000)):
+        valid_symbol(symbol)
+        return dict(
+            mode="recorded", symbol=symbol, **app.state.store.recent_replay(symbol, limit)
+        )
+
     @app.post("/api/demo/feed")
     async def demo_feed(request: Request, body: DemoAction):
         if not demo_controls:

@@ -69,6 +69,17 @@ def hydrate(row):
     )
 
 
+def replay_record(row):
+    return dict(
+        receiptId=row["receipt_id"],
+        receivedAt=row["receipt_time"],
+        orderingTime=row["receipt_ordering_time"],
+        disposition=row["disposition"],
+        applied=bool(row["applied"]),
+        observation=hydrate(row),
+    )
+
+
 class MarketStore:
     def __init__(self, path="./data/market.sqlite"):
         if str(path) != ":memory:":
@@ -221,17 +232,49 @@ class MarketStore:
                 "SELECT r.id AS receipt_id,r.received_at AS receipt_time,r.disposition,r.applied,r.ordering_time AS receipt_ordering_time,o.* FROM receipts r JOIN observations o ON o.id=r.observation_id WHERE o.symbol=? AND r.id>? AND r.id<=? ORDER BY r.id LIMIT ?",
                 (symbol, after, until, limit),
             ).fetchall()
-            return [
-                dict(
-                    receiptId=r["receipt_id"],
-                    receivedAt=r["receipt_time"],
-                    orderingTime=r["receipt_ordering_time"],
-                    disposition=r["disposition"],
-                    applied=bool(r["applied"]),
-                    observation=hydrate(r),
-                )
-                for r in rows
-            ]
+            return [replay_record(row) for row in rows]
+
+    def recent_replay(self, symbol, limit=800):
+        with self.lock:
+            until = self.db.execute(
+                "SELECT COALESCE(MAX(id),0) FROM receipts"
+            ).fetchone()[0]
+            rows = self.db.execute(
+                """SELECT r.id AS receipt_id, r.received_at AS receipt_time,
+                          r.ordering_time AS receipt_ordering_time, r.disposition, r.applied, o.*
+                   FROM receipts r JOIN observations o ON o.id=r.observation_id
+                   WHERE o.symbol=? AND r.id<=? ORDER BY r.id DESC LIMIT ?""",
+                (symbol, until, limit),
+            ).fetchall()
+            after = rows[-1]["receipt_id"] - 1 if rows else 0
+            # An as-of checkpoint makes seeking to the start show the same 360
+            # candles as folding the entire prefix. Only applied receipts count.
+            candles = self.db.execute(
+                """SELECT o.* FROM (
+                     SELECT MAX(r.id) AS receipt_id, o.source_time
+                     FROM observations o JOIN receipts r ON r.observation_id=o.id
+                     WHERE o.symbol=? AND o.kind='candle' AND r.applied=1 AND r.id<=?
+                     GROUP BY o.logical_id, o.source_time
+                     ORDER BY o.source_time DESC LIMIT 360
+                   ) AS checkpoint
+                   JOIN receipts r ON r.id=checkpoint.receipt_id
+                   JOIN observations o ON o.id=r.observation_id
+                   ORDER BY o.source_time""",
+                (symbol, after),
+            ).fetchall()
+            quote = self.db.execute(
+                """SELECT o.* FROM observations o JOIN receipts r ON r.observation_id=o.id
+                   WHERE o.symbol=? AND o.kind='quote' AND r.applied=1 AND r.id<=?
+                   ORDER BY o.source_time DESC, r.id DESC LIMIT 1""",
+                (symbol, after),
+            ).fetchone()
+            return dict(
+                until=until,
+                checkpoint=dict(
+                    candles=[hydrate(row) for row in candles], quote=hydrate(quote)
+                ),
+                records=[replay_record(row) for row in reversed(rows)],
+            )
 
     def stats(self):
         with self.lock:

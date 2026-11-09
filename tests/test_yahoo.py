@@ -162,6 +162,9 @@ async def test_real_async_socket_path_commits_before_publish_and_reports_disconn
         committed.set()
 
     def on_status(status):
+        if status["stream"]["state"] == "connecting":
+            assert "lastQuoteReceivedAt" not in status["symbols"]["BTC-USD"]
+            assert "lastQuoteSourceTime" not in status["symbols"]["BTC-USD"]
         if "retry" in status["stream"]["detail"]:
             retry.set()
 
@@ -177,6 +180,7 @@ async def test_real_async_socket_path_commits_before_publish_and_reports_disconn
         on_data=on_data,
         on_status=on_status,
     )
+    f.symbols["BTC-USD"] = dict(lastQuoteReceivedAt=T, lastQuoteSourceTime=T - 1000)
     f.stopped = False
     task = asyncio.create_task(f.stream_loop())
     try:

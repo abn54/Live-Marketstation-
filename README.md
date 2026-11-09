@@ -45,7 +45,7 @@ Optional configuration: copy `.env.example` to `.env` and restart. Defaults: `HO
 
 A duplicate adds a receipt without a false revision; a newer duplicate advances the request watermark. A changed payload creates a revision. An older request response is retained but cannot replace a newer head. A newer return to an old value is a legitimate revision. All data is committed before broadcast. The migrated Python store opens existing schema-v1 records without rewriting them; decoded-payload equality avoids false revisions from `1` versus `1.0` JSON formatting.
 
-Choose **Replay** for persisted receipt-order playback, play/pause, restart, seek, and receipts-per-second speed. Playback starts near the tail; restart for the full recording. `RECORDED REPLAY` remains explicit, background live collection stays independent, and replay never writes observations back. Click **Live** to return to current collection.
+Choose **Replay** for receipt-order playback, play/pause, restart, seeking, and speed. The browser loads up to 800 recent saved receipts and the saved chart state just before them. Playback starts near the end of that window. Restart returns to the beginning of the window. The full history remains available through `/api/replay` pagination. `RECORDED REPLAY` labels the display, and live collection continues in the background. Click **Live** to return to current collection. **View observation ledger** jumps to the saved receipt IDs, observation IDs, timestamps, revisions, and candle states.
 
 For market-closed/offline development, import the [genuine captured BTC recording](evidence/btc-recording.json) to a separate database:
 
@@ -62,7 +62,7 @@ Then choose Replay. The import preserves logical provider identities and origina
 ENABLE_DEMO_CONTROLS=true npm run dev
 ```
 
-Click **Demonstrate feed outage** in the footer. This cancels actual upstream socket/HTTP collection and polling. Both channels become unavailable, counts stop growing, source ages increase, and committed candles remain. **Reconnect Yahoo feed** resumes the actual providers. Controls are off by default and reject cross-origin requests. Reconnect is idempotent, and responses from old connection generations cannot leak into a resumed feed.
+Click **Demonstrate feed outage** beside the chart. This stops upstream socket and HTTP collection. Both channels become unavailable, counts stop growing, source ages increase, and the chart retains committed candles. Click **Reconnect Yahoo feed** to resume collection. The selected symbol needs a Yahoo pricing message from the new connection before it shows as live. Controls are off by default and reject cross-origin requests.
 
 HTTP failures including 429, malformed data, timeouts, and socket closure expose errors without generating substitute prices. Socket retries use exponential backoff up to 30 seconds; chart requests retry on the poll schedule. TLS is verified using trusted CA roots; certificate verification is never disabled.
 
@@ -89,7 +89,7 @@ The full overview requires Vue/FastAPI/SQLite; the earlier React/Express prototy
 
 Yahoo's public endpoints are unofficial and can change, delay data, or rate limit access. Quotes are not a complete trade tape. Candles use reported OHLCV instead of inferred minute volume from daily/rolling counters. Completeness means the minute had ended by the chart request start time; it is persisted with that fetched observation. A closed market's last bar can therefore complete without waiting for another bar. Outages do not invent finalizing snapshots, and later provider corrections remain possible. No exchange-session calendar is implemented.
 
-Startup backfills one available day. Later polling overlaps the last three minutes; older corrections require another full backfill. Gaps are not filled. SQLite retains the full log without automatic retention/compaction; the chart displays 360 bars and browser replay is limited to 200,000 receipts per symbol (the API supports further pagination). This deliverable includes no trading, indicators, model decisions, chatbot, vision, live-audio AI, deployment, or mobile build; those belong to later parts or are not required.
+Startup backfills one available day. Later polling overlaps the last three minutes, so older corrections require another full backfill. SQLite retains the full log without automatic retention. The chart holds up to 360 bars and opens zoomed to the recent bars. Use **Fit chart to data** to see the full chart range. The browser plays a recent receipt window, and the paginated API provides the full log.
 
 ## Primary references
 

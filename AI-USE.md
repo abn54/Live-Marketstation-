@@ -32,6 +32,8 @@ The first Python test pass exposed WebSocket shutdown cancellation and a test th
 
 Part 4.1 does not call an AI decision model, chatbot, vision model, or live-audio AI service. No OpenAI API key or other model-provider credentials are required or transmitted by this application. Those features belong to later parts and have not been implemented or claimed here. Market observations come from Yahoo Finance; replay comes from recorded SQLite observations, not model-generated prices.
 
+Codex used the browser to rehearse the recording flow after the student reported trouble. Codex changed the Vue layout and chart view, added the SQLite replay checkpoint and FastAPI route, corrected per-connection quote freshness, and added regression coverage. The student supplies the spoken recording.
+
 ## Evidence and redaction
 
 [Curated evidence log](docs/evidence-log.md), [verification](docs/verification.md), and the report connect selected requirements/prompts to generated artifacts, checks, and decisions. Full chat exports, credentials, personal filesystem details, authentication data, and private third-party browser content are excluded. GitHub's existing commit identity and the requested public repository identify the submission; screenshots and recordings contain the local application and public market data.

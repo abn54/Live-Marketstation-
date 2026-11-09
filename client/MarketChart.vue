@@ -20,6 +20,18 @@ let price: ISeriesApi<"Candlestick"> | null = null;
 let volume: ISeriesApi<"Histogram"> | null = null;
 let previous: Observation[] = [];
 let previousSymbol = "";
+function showRecent() {
+  if (!chart || !previous.length) return;
+  const end = previous.length - 1;
+  const visibleBars = Math.max(
+    20,
+    Math.min(100, Math.floor(element.value!.clientWidth / 7)),
+  );
+  chart.timeScale().setVisibleLogicalRange({
+    from: Math.max(0, end - visibleBars + 1),
+    to: end + 5,
+  });
+}
 function render() {
   if (!chart || !price || !volume) return;
   const changedSymbol = previousSymbol !== props.symbol;
@@ -43,21 +55,24 @@ function render() {
   const incremental =
     previous.length > 0 &&
     sorted.length >= previous.length &&
+    previous.at(-1)!.sourceTime === sorted[previous.length - 1]?.sourceTime &&
     previous.every(
       (o, i) => i === previous.length - 1 || o.id === sorted[i]?.id,
     );
   if (incremental) {
     for (let i = previous.length - 1; i < sorted.length; i++) {
+      if (previous[i]?.id === sorted[i].id) continue;
       price.update(p(sorted[i]));
       volume.update(v(sorted[i]));
     }
   } else {
     price.setData(sorted.map(p));
     volume.setData(sorted.map(v));
-    if (!previous.length) chart.timeScale().fitContent();
   }
+  const resetRange = !previous.length;
   previous = sorted;
   previousSymbol = props.symbol;
+  if (resetRange) showRecent();
 }
 onMounted(() => {
   chart = createChart(element.value!, {
@@ -105,7 +120,6 @@ onMounted(() => {
     borderVisible: false,
   });
   render();
-  requestAnimationFrame(() => chart?.timeScale().fitContent());
 });
 watch(() => [props.candles, props.symbol], render, { flush: "post" });
 watch(
