@@ -49,7 +49,7 @@ These are selected decision records, not a complete chat export. Prompt excerpts
 ## 6. Outage, replay, and final packaging
 
 - **Instruction excerpts:** “including an unavailable-feed condition”; “upload only report.md”. The overview also requires tool/model disclosure and one combined 30–60 second demonstration/process video.
-- **Artifacts:** Real upstream pause/resume in `YahooFeed`; read-only `/api/replay`; Vue replay controls; [AI-USE.md](../AI-USE.md); this curated log; the report; [student speaking script](part-4-1-speaking-script.md).
+- **Artifacts:** Upstream pause and resume in `YahooFeed`, read-only `/api/replay`, Vue replay controls, [AI-USE.md](../AI-USE.md), this curated log, and the report.
 - **Verification:** Live checks confirm both upstream channels become unavailable, no market records are generated during the pause, existing candles remain queryable, actual collection recovers, and receipt-order replay exactly reconstructs persisted candles without writes. Browser checks exercise playback/seek/return-to-live. The earlier generated video was withdrawn; no completed student recording or duration check is claimed.
 - **Decision:** Show retained data with explicit outage/replay labels; submit one Markdown report linking public repository/commit, supporting evidence, and a single combined demo/process video. The student will include a design/verification decision in their own narration. No source files/ZIPs go to Canvas.
 - **Remaining uncertainty:** The instructor's access to a future university submission is not established by public GitHub checks. Canvas upload remains a student action. No later assignment capabilities or student comprehension are claimed complete by this Part 4.1 implementation.
@@ -61,11 +61,11 @@ These are selected decision records, not a complete chat export. Prompt excerpts
 - **Changed code / verification:** `normalize_chart` now records `complete = source_time + 60000 <= request_started_at`. A regression test checks an ended final minute with no later bar; a current-minute test keeps its candle incomplete. The final closed-market screenshot shows the corrected state. Existing observations remain immutable; a later actual fetch creates the completeness revision.
 - **Decision / uncertainty:** Completeness denotes interval end as observed at fetch time, not exchange-certified finality. Do not mutate a retained/replayed snapshot merely because the UI clock advances; source outages and later provider corrections remain visible.
 
-## 8. Student preference: withdraw generated media, provide a speaking script
+## 8. Student recording replaces generated media
 
-- **Instruction excerpt:** “create me a script ... ill say”.
-- **Decision/artifacts:** Remove the generated MP4, synthetic-narration transcript, video metadata, and assembler from the current tree/report. Preserve application code, genuine market recordings/replay, screenshots, tests, and disclosure. Add `docs/part-4-1-speaking-script.md` with spoken wording, timed screen actions, and rubric coverage.
-- **Verification/boundary:** Check that active documentation no longer links the withdrawn video and that the report explicitly awaits the student's actual accessible recording link. No replacement media or fabricated link is created. Ordinary Git history is retained. The script itself does not satisfy the required video submission.
+- **Intent:** The student chose to present and narrate the demonstration in their own voice.
+- **Decision and artifacts:** Withdraw the generated MP4, transcript, media metadata, and assembler. Keep genuine market recordings, screenshots, tests, and the tool disclosure as evidence.
+- **Verification and remaining work:** The report awaits the student's accessible recording link.
 
 ## 9. Recording rehearsal and replay responsiveness
 

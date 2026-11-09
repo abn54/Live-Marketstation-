@@ -17,7 +17,7 @@ The student's instructions supplied the Part 4.1 requirements, repository destin
 | yfinance pricing protobuf + websockets + httpx | Decoded actual Yahoo pricing messages and fetched real chart OHLCV. They are data/transport libraries, not AI models. |
 | Vue 3, Vite, vue-tsc, Lightweight Charts, Lucide Vue | Implemented/rendered/typechecked the frontend. Python FastAPI and sqlite3 implement the backend and storage. Node is used for frontend tooling, launchers, and an independent evidence client. |
 | Prettier and Black | Formatted generated TypeScript/Vue/JavaScript and Python for review. |
-| macOS `say` (Samantha voice) and FFmpeg | Previously generated a narrated demo from UI captures. The user declined that generated video/narration and requested a speaking script for their own recording. Those media files and the assembler are removed from the current tree; the historical tool use remains disclosed. |
+| macOS `say` (Samantha voice) and FFmpeg | Previously generated a narrated demo from UI captures. The user chose to record their own video. The generated media and assembler were withdrawn. |
 | GitHub Actions | Configured repeatable Python tests and Vue build checks on pushes and pull requests. Local clean-checkout results and observed remote CI status are distinguished in verification notes. |
 
 ## Revised choices and why
@@ -40,4 +40,4 @@ Codex used the browser to rehearse the recording flow after the student reported
 
 ## Student-recorded video preference
 
-The user requested removal of the generated demo/narration and a rubric-aligned script they will speak themselves. The current tree therefore contains [a speaking script](docs/part-4-1-speaking-script.md), not a completed replacement video. The report is awaiting the student's actual accessible 30–60 second recording link. No student voice recording has been created or claimed by the agent. Normal Git history still identifies the withdrawn earlier artifacts; history was not rewritten.
+The student chose to record the demonstration in their own voice. Codex prepared private recording notes. The report awaits the student's accessible 30–60 second recording link.

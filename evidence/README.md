@@ -1,8 +1,7 @@
 # Part 4.1 evidence — Vue / FastAPI / SQLite
 
-- [Student speaking script and screen actions](../docs/part-4-1-speaking-script.md) — actual recording/link pending.
 - [13 live end-to-end checks](live-verification.json) · [actual output](live-run-results.txt)
-- [29 passing Python/FastAPI tests](test-results.txt) · [Vue production build](build-results.txt)
+- [30 passing Python/FastAPI tests](test-results.txt) · [Vue production build](build-results.txt)
 - [Browser QA](browser-qa.json) · [desktop](live-dashboard.jpg) · [outage](feed-unavailable.jpg) · [replay](recorded-replay.jpg) · [closed-market completeness/staleness](market-closed.jpg) · [responsive layout](mobile-dashboard.jpg)
 - [November 9 recording rehearsal](demo-readiness.json) · [November 9 independent live check](demo-live-verification.json)
 - [Existing-record preservation](migration-preservation.json) · [selected first-run failures](migration-first-run.txt)

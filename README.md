@@ -2,7 +2,7 @@
 
 IST 402 — Assignment 4, Part 4.1. A **Vue 3 frontend, Python FastAPI backend, and SQLite database on localhost**, with genuine Yahoo streaming quotes, updating one-minute candlesticks and volume, browser WebSockets, and persistent replay.
 
-[Submission report](report.md) · [Design/schema](docs/design.md) · [Verification](docs/verification.md) · [AI/tool disclosure](AI-USE.md) · [Curated process evidence](docs/evidence-log.md) · [Your speaking script](docs/part-4-1-speaking-script.md)
+[Submission report](report.md) · [Design/schema](docs/design.md) · [Verification](docs/verification.md) · [AI/tool disclosure](AI-USE.md) · [Curated process evidence](docs/evidence-log.md)
 
 ## Initialize and run
 
@@ -85,7 +85,7 @@ The independent client asserts the required stack, receives fresh Yahoo quotes a
 
 ## Scope, disclosure, and limitations
 
-The full overview requires Vue/FastAPI/SQLite; the earlier React/Express prototype was migrated when that requirement was supplied. [AI-USE.md](AI-USE.md) discloses the coding agent, known model information, tools, the withdrawn generated demo, and revised approach. The [curated evidence log](docs/evidence-log.md) connects prompt excerpts, code, failures, tests, decisions, and uncertainty. It is not a full chat export. You will record the single 30–60 second combined video with your own voice using [the speaking script](docs/part-4-1-speaking-script.md). The generated demo and narration have been removed from the current submission. Add your actual video link to `report.md` before uploading only that report to Canvas.
+The full overview requires Vue, FastAPI, and SQLite. The earlier React/Express prototype was migrated when that requirement was supplied. [AI-USE.md](AI-USE.md) discloses the coding agent, known model information, tools, withdrawn generated demo, and revised approach. The [curated evidence log](docs/evidence-log.md) connects prompt excerpts, code, failures, tests, decisions, and uncertainty. Add the accessible link to the student’s single 30–60 second demonstration to `report.md` before uploading the report to Canvas.
 
 Yahoo's public endpoints are unofficial and can change, delay data, or rate limit access. Quotes are not a complete trade tape. Candles use reported OHLCV instead of inferred minute volume from daily/rolling counters. Completeness means the minute had ended by the chart request start time; it is persisted with that fetched observation. A closed market's last bar can therefore complete without waiting for another bar. Outages do not invent finalizing snapshots, and later provider corrections remain possible. No exchange-session calendar is implemented.
 

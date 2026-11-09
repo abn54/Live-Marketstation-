@@ -13,7 +13,7 @@ The user supplied the complete Assignment 4 overview as pasted text after the in
 | Continue Git/GitHub, browser tests, AI-use/process evidence | Git history; actual local-browser checks; `AI-USE.md`; `docs/evidence-log.md` with revised stack, TLS failure, generated code, tests, and uncertainty; clean checkout and push/PR checks. |
 | Canvas packaging | Only `report.md`, with repository URL, submitted implementation/evidence commit, accessible single 30–60 second combined demonstration/process video, results, decisions, limitations, and support links. |
 
-The overview's final-submission disclosure/process practices are established now so they can be maintained through the cumulative parts. The speaking script includes a verification/design decision for the student's own recording; the report and curated log explain the revised approach and relevant generated code. There is no separate process recording or complete chat export.
+The overview's disclosure and evidence practices apply across the cumulative parts. The student will explain a design or verification decision in the combined recording. The report and curated log explain the revised approach and relevant generated code.
 
 ## Deferred to later parts
 

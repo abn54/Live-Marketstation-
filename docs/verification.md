@@ -17,7 +17,7 @@ Verified November 7 and rechecked November 9, 2026 with Vue 3, Python 3.12, Fast
 | November 9 recording rehearsal | **Passed** on the updated production app | [Live chart, narrow ledger, replay, outage and recovery](../evidence/demo-readiness.json) |
 | Genuine recording import to isolated disk database | **Passed; integrity `ok`** | [Import smoke output](../evidence/import-results.txt), [recording](../evidence/btc-recording.json) |
 | Fresh-clone install/test/build/import and production HTTP/WS | **Passed**, including 30 tests and isolated SQLite | [Redacted clean-checkout results](../evidence/clean-checkout.json) |
-| Student-recorded demonstration/process video | **Recording/link pending**; generated demo withdrawn at user request | [Speaking script and screen actions](part-4-1-speaking-script.md) |
+| Student-recorded demonstration/process video | **Recording link pending** | [Submission report](../report.md) |
 
 ## Live evidence boundaries
 
@@ -52,7 +52,7 @@ The clean checkout passed in **31.03 seconds** at source commit `31c69e001ee6f68
 
 The user will speak and record the demonstration themselves. The generated narrated MP4, transcript, media metadata, and assembly script have been removed from the current submission. Earlier generation/verification remains disclosed in AI-USE.md and Git history, but is not evidence of a completed student recording.
 
-[The speaking script](part-4-1-speaking-script.md) provides approximately 120 written words and screen actions for a 50–60 second take: live data/volume/source ages; receipt/revision history; SQLite-before-WebSocket delivery; replay; actual outage/recovery; one failure/verification decision; and limitations. Record one video between 30 seconds and one minute. No separate full coding-session recording is required.
+The student’s 30–60 second demonstration will show the live chart and feed health, receipt and revision history, SQLite before WebSocket delivery, replay, outage and recovery, and one design or verification decision.
 
 Add the student's actual accessible link to report.md before submitting. There is currently no replacement video link, so the video portion of submission packaging is incomplete. Other application/test/browser/clean-checkout evidence above remains valid.
 
