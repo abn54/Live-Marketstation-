@@ -6,7 +6,7 @@
 
 - **Public repository:** [abn54/Live-Marketstation-](https://github.com/abn54/Live-Marketstation-).
 - **Implementation and evidence commit:** [`a0d0d898d972c0401c90232e9d5ad41caad9f6be`](https://github.com/abn54/Live-Marketstation-/commit/a0d0d898d972c0401c90232e9d5ad41caad9f6be). This commit contains the application, evidence, and demonstration. A later report-only commit pins the links below.
-- **Student-recorded video:** [Watch the Part 4.1 demonstration (0:59)](https://raw.githubusercontent.com/abn54/Live-Marketstation-/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/part-4-1-student-demo.mp4).
+- **Student-recorded video:** [Watch the Part 4.1 demonstration (0:59)](https://cdn.jsdelivr.net/gh/abn54/Live-Marketstation-@a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/part-4-1-student-demo.mp4).
 - **AI/tool disclosure:** [AI-USE.md](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/AI-USE.md) · **Curated process evidence:** [evidence log](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/docs/evidence-log.md).
 
 ## Completed
