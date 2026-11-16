@@ -1,0 +1,45 @@
+{
+  "source": "https://psu.mediaspace.kaltura.com/media/t/1_apymd1m3",
+  "sourceDurationSeconds": 167.424,
+  "durationSeconds": 59.12,
+  "sha256": "785c73a780aed6f26576acd8679aed005b707d9a413aa40bdb6592b869aef07e",
+  "narration": "Student's original recorded narration",
+  "scenes": [
+    {
+      "sourceStartSeconds": 18.74,
+      "sourceEndSeconds": 30.23,
+      "clipStartSeconds": 0,
+      "shows": "SMA 9 and SMA 21 chart"
+    },
+    {
+      "sourceStartSeconds": 36.1,
+      "sourceEndSeconds": 43.28,
+      "clipStartSeconds": 11.49,
+      "shows": "Crossover arrows and completed-candle rule"
+    },
+    {
+      "sourceStartSeconds": 98.0,
+      "sourceEndSeconds": 104.82,
+      "clipStartSeconds": 18.67,
+      "shows": "Backtest settings, run action and account metrics"
+    },
+    {
+      "sourceStartSeconds": 110.6,
+      "sourceEndSeconds": 127.98,
+      "clipStartSeconds": 25.49,
+      "shows": "Account result, equity curve, fills and reference verification"
+    },
+    {
+      "sourceStartSeconds": 137.26,
+      "sourceEndSeconds": 153.39,
+      "clipStartSeconds": 42.87,
+      "shows": "Execution timing, fill table and decision receipts"
+    }
+  ],
+  "edits": "Five chronological excerpts; browser chrome and desktop dock cropped; audio gain +3 dB and short cut-edge fades; original playback speed.",
+  "verification": {
+    "durationWithin30To60Seconds": true,
+    "fullAudioVideoDecode": true,
+    "codecs": "H.264 / AAC"
+  }
+}

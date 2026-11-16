@@ -2,6 +2,8 @@
 
 ## Part 4.2
 
+- [Student-recorded 59-second demonstration](part-4-2-student-demo.mp4) · [media verification](part-4-2-video-verification.json)
+
 - [44 passing tests](part-4-2-tests.txt) · [Vue build](part-4-2-build.txt)
 - [Genuine recorded receipt sample](part-4-2-recording.json) · [verified simulated account](part-4-2-verification.json)
 - [Design and accounting](../docs/part-4-2-design.md) · [Part 4.2 verification](../docs/part-4-2-verification.md)

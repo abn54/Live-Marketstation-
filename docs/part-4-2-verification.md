@@ -33,4 +33,8 @@ A fresh `git clone --no-local` at source commit `6c131ec33604be858a77bfb6e8a0a04
 
 The GitHub Actions run for that source commit completed successfully. Tests, the Vue build, isolated import and recorded-strategy verification all passed. [Observed run](https://github.com/abn54/Live-Marketstation-/actions/runs/43801567690) · [captured status](../evidence/part-4-2-ci.json)
 
-The code, fixed recorded test, repeatable checks, documentation and evidence support Part 4.2. The student's accessible 30–60 second Part 4.2 recording link is pending. The report will pin the verified implementation and evidence commit. Part 4.1's submitted report remains archived separately.
+The submitted Part 4.2 clip lasts **59.12 seconds**, within the required 30–60 seconds. It was cut from the student's 167.424-second Kaltura recording. Its opening shows SMA 9/21 and the completed-candle explanation. Backtest settings and account metrics follow around 0:19, followed by the equity curve, fills, reference verification, and decision/execution timing. The final table shows orders and their outcomes.
+
+FFprobe checked the duration and H.264/AAC streams. FFmpeg decoded the full export without errors. The clip keeps the student's original narration at its original speed. The main database shown in the recording is longer than the fixed offline sample, and the student changes the cash setting while recording. [Video verification and source scene ranges](../evidence/part-4-2-video-verification.json)
+
+The report pins the application, evidence and video commit. Part 4.1's submitted report remains archived separately.

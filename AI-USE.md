@@ -22,7 +22,7 @@ The student's instructions supplied the Part 4.1 requirements, repository destin
 
 ## Part 4.2 work on November 15
 
-Codex implemented the SMA overlays and crossover markers, receipt-driven paper account, persistent simulation snapshots, backtest controls, tests, offline evidence, and documentation. Defaults of 9/21 bars, $10,000 cash, 95% allocation, 10 bps fees and 5 bps slippage were implementation choices, with editable controls and explicit assumptions. The agent used pandas as an independent rolling-mean reference and Node to run the Vue calculator in the Python verification tests. It used FFmpeg in Part 4.1 to edit the student's recording. The Part 4.2 recording remains a student task.
+Codex implemented the SMA overlays and crossover markers, receipt-driven paper account, persistent simulation snapshots, backtest controls, tests, offline evidence, and documentation. Defaults of 9/21 bars, $10,000 cash, 95% allocation, 10 bps fees and 5 bps slippage were implementation choices, with editable controls and explicit assumptions. The agent used pandas as an independent rolling-mean reference and Node to run the Vue calculator in the Python verification tests. It used FFmpeg to edit the student's recordings for Parts 4.1 and 4.2.
 
 The Sites skill supplied local development and browser-verification guidance. The implementation uses the existing Vue/FastAPI checkout. Codex used primary pandas and TradingView documentation for calculation and execution-timing references, Black and Prettier for touched source files, and the supported browser tool for verification. The first Vue build exposed a marker generic-type mismatch, which was corrected with the chart library's `Time` type. Browser testing exposed slow joins on the larger market history, leading to the `heads_observation` index. These changes and their verification are recorded in the evidence log. No subagents were used.
 
@@ -46,4 +46,4 @@ Codex used the browser to rehearse the recording flow after the student reported
 
 ## Student-recorded video preference
 
-The student recorded and narrated the demonstration in Kaltura. Codex prepared private recording notes and used the Kaltura transcript and FFmpeg to select and trim scenes from the student's recording. The 58.92-second clip uses the student's original narration and dashboard footage. The report links the submitted clip.
+The student recorded and narrated both demonstrations in Kaltura. Codex prepared private recording notes and used Kaltura transcripts and FFmpeg to select and trim scenes. The Part 4.1 clip lasts 58.92 seconds. The Part 4.2 clip lasts 59.12 seconds and uses five chronological excerpts, retaining the student's narration at its original speed. Browser chrome and the desktop dock were cropped, and audio gain and short cut-edge fades improved playback. The report links the Part 4.2 clip.

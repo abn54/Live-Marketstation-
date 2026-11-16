@@ -17,6 +17,13 @@ These are selected decision records, not a complete chat export. Prompt excerpts
 - **Verification.** The same local candle queries dropped to approximately 2–3 milliseconds per symbol. The browser then showed live quotes, both SMA values and the saved backtest. The first TypeScript build also caught an incompatible marker generic; the corrected explicit `ISeriesMarkersPluginApi<Time>` passed the Vue build.
 - **Remaining uncertainty.** Query timings are local observations. Growth, hardware and network latency can change them. Future large-volume retention remains a separate concern.
 
+## Part 4.2 · Student-recorded submission video
+
+- **Instruction.** The student supplied a Kaltura recording and requested, “take parts of this to create the video ... the length needed.”
+- **Artifact and decision.** The 167.424-second source was cut to 59.12 seconds using five chronological excerpts. Original narration covers SMA lengths, completed candles, pandas/accounting verification and subsequent-quote execution. The footage shows the chart, account metrics, equity curve, fills and decision table. [Media](../evidence/part-4-2-student-demo.mp4)
+- **Verification.** FFprobe confirmed the duration and streams. FFmpeg decoded all audio and video without errors. Source scene ranges and the exported hash are recorded in [video verification](../evidence/part-4-2-video-verification.json).
+- **Boundary.** The recorded backtests use the growing local market log and include cash-setting changes. Their results differ from the fixed historical sample used for stable numerical verification.
+
 ## 1. Required behavior and genuine live provenance
 
 - **Intended change / instruction:** “The Part 4.1 deliverable must demonstrate live streaming.” “Make the data source, age, and feed status visible.”

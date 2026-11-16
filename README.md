@@ -105,7 +105,7 @@ The independent client asserts the required stack, receives fresh Yahoo quotes a
 
 ## Scope, disclosure, and limitations
 
-The full overview requires Vue, FastAPI, and SQLite. The earlier React/Express prototype was migrated when that requirement was supplied. [AI-USE.md](AI-USE.md) discloses the coding agent, known model information, tools and revised approaches. The [evidence log](docs/evidence-log.md) connects instructions, code, failures, tests, decisions, and uncertainty. [The Part 4.1 report](docs/reports/part-4-1.md) preserves its original submission. The current [Part 4.2 report](report.md) awaits the student's new 30–60 second recording.
+The full overview requires Vue, FastAPI, and SQLite. The earlier React/Express prototype was migrated when that requirement was supplied. [AI-USE.md](AI-USE.md) discloses the coding agent, known model information, tools and revised approaches. The [evidence log](docs/evidence-log.md) connects instructions, code, failures, tests, decisions, and uncertainty. [The Part 4.1 report](docs/reports/part-4-1.md) preserves its original submission. The current [Part 4.2 report](report.md) links the student's 59-second demonstration.
 
 Yahoo's public endpoints are unofficial and can change, delay data, or rate limit access. Quotes are not a complete trade tape. Candles use reported OHLCV instead of inferred minute volume from daily/rolling counters. Completeness means the minute had ended by the chart request start time; it is persisted with that fetched observation. A closed market's last bar can therefore complete without waiting for another bar. Outages do not invent finalizing snapshots, and later provider corrections remain possible. No exchange-session calendar is implemented.
 
