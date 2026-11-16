@@ -86,7 +86,16 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
             ENABLE_DEMO_CONTROLS="false",
         )
         run(["npm", "run", "db:init"], env)
-        run(["npm", "run", "recording:import"], env)
+        run(
+            [
+                "npm",
+                "run",
+                "recording:import",
+                "--",
+                "evidence/part-4-2-recording.json",
+            ],
+            env,
+        )
         with socket.socket() as reserved:
             reserved.bind(("127.0.0.1", 0))
             port = reserved.getsockname()[1]
@@ -135,6 +144,26 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
                         ).status_code
                         == 403
                     )
+                    strategy = client.post(
+                        base + "/api/simulations",
+                        json={
+                            "symbol": "BTC-USD",
+                            "mode": "backtest",
+                        },
+                        timeout=20,
+                    ).json()
+                    assert strategy["summary"]["fills"] >= 2
+                    assert (
+                        abs(
+                            strategy["summary"]["equity"]
+                            - (
+                                10000
+                                + strategy["summary"]["realizedPnl"]
+                                + strategy["summary"]["unrealizedPnl"]
+                            )
+                        )
+                        < 0.001
+                    )
 
                 async def probe():
                     async with connect(f"ws://127.0.0.1:{port}/ws", origin=base) as ws:
@@ -154,6 +183,7 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
                     "stack": health["stack"],
                     "candlesAvailable": len(bars["candles"]),
                     "recordedReplayAvailable": True,
+                    "strategySummary": strategy["summary"],
                     "demoControlsDisabled": True,
                     "webSocket": asyncio.run(probe()),
                 }
@@ -174,7 +204,7 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
         raise
     finally:
         result["seconds"] = round(time.time() - started, 2)
-        (repo / "evidence/clean-checkout.json").write_text(
+        (repo / "evidence/part-4-2-clean-checkout.json").write_text(
             json.dumps(result, indent=2) + "\n"
         )
 print(

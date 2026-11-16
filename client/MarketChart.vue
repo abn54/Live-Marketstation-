@@ -6,18 +6,32 @@ import {
   createChart,
   ColorType,
   LineStyle,
+  LineSeries,
+  createSeriesMarkers,
 } from "lightweight-charts";
-import type { IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-charts";
+import type {
+  IChartApi,
+  ISeriesApi,
+  ISeriesMarkersPluginApi,
+  Time,
+  UTCTimestamp,
+} from "lightweight-charts";
 import type { Observation } from "./types";
+import { calculateIndicators } from "./indicators";
 const props = defineProps<{
   candles: Observation[];
   symbol: string;
   fitKey: number;
+  fast?: number;
+  slow?: number;
 }>();
 const element = ref<HTMLDivElement | null>(null);
 let chart: IChartApi | null = null;
 let price: ISeriesApi<"Candlestick"> | null = null;
 let volume: ISeriesApi<"Histogram"> | null = null;
+let shortSma: ISeriesApi<"Line"> | null = null;
+let longSma: ISeriesApi<"Line"> | null = null;
+let markers: ISeriesMarkersPluginApi<Time> | null = null;
 let previous: Observation[] = [];
 let previousSymbol = "";
 function showRecent() {
@@ -72,6 +86,27 @@ function render() {
   const resetRange = !previous.length;
   previous = sorted;
   previousSymbol = props.symbol;
+  const points = calculateIndicators(sorted, props.fast, props.slow);
+  shortSma?.setData(
+    points
+      .filter((p) => p.fast !== null)
+      .map((p) => ({ time: (p.time / 1000) as UTCTimestamp, value: p.fast! })),
+  );
+  longSma?.setData(
+    points
+      .filter((p) => p.slow !== null)
+      .map((p) => ({ time: (p.time / 1000) as UTCTimestamp, value: p.slow! })),
+  );
+  markers?.setMarkers(
+    points
+      .filter((p) => p.signal)
+      .map((p) => ({
+        time: (p.time / 1000) as UTCTimestamp,
+        position: p.signal === "buy" ? "belowBar" : "aboveBar",
+        color: p.signal === "buy" ? "#a6dfff" : "#f0b879",
+        shape: p.signal === "buy" ? "arrowUp" : "arrowDown",
+      })),
+  );
   if (resetRange) showRecent();
 }
 onMounted(() => {
@@ -115,13 +150,28 @@ onMounted(() => {
     lastValueVisible: false,
     priceLineVisible: false,
   });
+  shortSma = chart.addSeries(LineSeries, {
+    color: "#8bd0fb",
+    lineWidth: 2,
+    title: "Fast SMA",
+    priceLineVisible: false,
+  });
+  longSma = chart.addSeries(LineSeries, {
+    color: "#edba78",
+    lineWidth: 2,
+    title: "Slow SMA",
+    priceLineVisible: false,
+  });
+  markers = createSeriesMarkers(price, []);
   chart.priceScale("volume").applyOptions({
     scaleMargins: { top: 0.79, bottom: 0 },
     borderVisible: false,
   });
   render();
 });
-watch(() => [props.candles, props.symbol], render, { flush: "post" });
+watch(() => [props.candles, props.symbol, props.fast, props.slow], render, {
+  flush: "post",
+});
 watch(
   () => props.fitKey,
   () => chart?.timeScale().fitContent(),
@@ -137,6 +187,6 @@ onUnmounted(() => {
     class="chart-canvas"
     ref="element"
     role="img"
-    :aria-label="`${symbol} one-minute candlestick chart with corresponding Yahoo volume; UTC time axis`"
+    :aria-label="`${symbol} one-minute candlestick chart with corresponding Yahoo volume, SMA ${fast ?? 9}, SMA ${slow ?? 21}, and crossover arrows; UTC time axis`"
   />
 </template>

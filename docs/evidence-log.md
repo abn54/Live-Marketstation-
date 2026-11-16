@@ -2,6 +2,21 @@
 
 These are selected decision records, not a complete chat export. Prompt excerpts are from the assignment text/user instructions. Source observations, injected tests, and UI captures have different evidentiary roles. The final report pins all current links to the submitted implementation/evidence commit. The previous framework implementation is retained only in history.
 
+## Part 4.2 · Indicators, execution and accounting
+
+- **Intent and instruction.** “Display two simple moving averages of different lengths and their crossover” and “using only information available at each decision time.”
+- **Artifacts and decision.** `client/indicators.ts` and `server/strategy.py` compute completed-bar averages. `server/simulation.py` consumes saved receipts and commits account state with a receipt checkpoint. An order fills at a subsequently observed quote, because a completed candle may arrive after the following minute has opened.
+- **Verification.** Independent pandas rolling means check Python batch, incremental, and Vue values and crossovers. Known cash/P&L examples, unfinished bars, late corrections, duplicate receipt retries, prefix causality, fees, slippage and persistence have focused tests. The genuine recorded sample yields five simulated fills. [Recorded result](../evidence/part-4-2-verification.json) · [tests](../tests/test_strategy.py)
+- **Uncertainty.** The fixed receipt sample measures one chosen strategy on one instrument with modeled liquidity and costs. It cannot establish expected future returns. Later corrections can change a current chart overlay while account decisions retain their original observation versions.
+
+## Part 4.2 · Browser failure and revised query
+
+- **Question.** Why did the browser initially show an empty chart while the server was receiving Yahoo quotes?
+- **Observed failure.** The larger SQLite history made `MarketStore.candles` take roughly four seconds per symbol. The four-symbol snapshot exceeded the browser's ten-second connection deadline. Browser inspection showed reconnecting status alongside working HTTP results.
+- **Decision and artifact.** Add `heads_observation` in `server/schema.sql`. Its join index gives SQLite an indexed lookup from an observation to its accepted head. Existing records and IDs are preserved.
+- **Verification.** The same local candle queries dropped to approximately 2–3 milliseconds per symbol. The browser then showed live quotes, both SMA values and the saved backtest. The first TypeScript build also caught an incompatible marker generic; the corrected explicit `ISeriesMarkersPluginApi<Time>` passed the Vue build.
+- **Remaining uncertainty.** Query timings are local observations. Growth, hardware and network latency can change them. Future large-volume retention remains a separate concern.
+
 ## 1. Required behavior and genuine live provenance
 
 - **Intended change / instruction:** “The Part 4.1 deliverable must demonstrate live streaming.” “Make the data source, age, and feed status visible.”

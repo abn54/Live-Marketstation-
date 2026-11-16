@@ -1,68 +1,57 @@
-# IST 402 — Assignment 4, Part 4.1
+# IST 402 — Assignment 4, Part 4.2
 
-**Market Data and the Dashboard**
+**Indicators, Simulated Trading, and Backtesting**
 
-**Student identifier:** abn54 · **Date:** November 9, 2026
+Student identifier **abn54** · November 15, 2026
 
-- **Public repository:** [abn54/Live-Marketstation-](https://github.com/abn54/Live-Marketstation-).
-- **Implementation and evidence commit:** [`a0d0d898d972c0401c90232e9d5ad41caad9f6be`](https://github.com/abn54/Live-Marketstation-/commit/a0d0d898d972c0401c90232e9d5ad41caad9f6be). This commit contains the application, evidence, and demonstration. A later report-only commit pins the links below.
-- **Student-recorded video:** [Watch the Part 4.1 demonstration (0:59)](https://cdn.jsdelivr.net/gh/abn54/Live-Marketstation-@a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/part-4-1-student-demo.mp4).
-- **AI/tool disclosure:** [AI-USE.md](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/AI-USE.md) · **Curated process evidence:** [evidence log](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/docs/evidence-log.md).
+- **Repository** — [abn54/Live-Marketstation-](https://github.com/abn54/Live-Marketstation-).
+- **Version** — Implementation commit will be pinned after final verification.
+- **Part 4.2 video** — Student-recorded 30–60 second demonstration link pending. The new recording must show the SMA overlays and crossover, simulated account and trade history, historical backtest result, and one design or verification decision.
 
 ## Completed
 
-Marketstation uses the overview's required **Vue 3 frontend, Python FastAPI backend, and SQLite database on localhost**. TradingView Lightweight Charts renders updating one-minute candlesticks and corresponding volume. Yahoo Finance's actual pricing WebSocket supplies streaming quotes; its Chart endpoint supplies OHLCV every 15 seconds. FastAPI commits observations to SQLite before broadcasting them over its client WebSocket to Vue. BTC-USD, ETH-USD, SPY, and AAPL are selectable.
+The existing Vue 3, FastAPI, SQLite and Yahoo WebSocket workstation now displays configurable SMA 9 and SMA 21 lines with upward and downward crossover markers on its candlestick chart. The indicator caption gives both current values, the latest crossover, and the completed-candle policy. Warm-up windows have no SMA value until enough closes exist. Forming candles are excluded.
 
-The dashboard displays provider, source times, quote/candle/receipt ages, separate feed states, forming/completed candles, and storage counters. Live status requires a genuine pricing message for the selected symbol in the current server session and fresh source timestamps; cached data or an open socket alone is insufficient. Closed equities remain stale while crypto can stream on weekends.
+The Strategy laboratory has a historical backtest and a paper account. Both use the same crossover and accounting engine. It tracks orders, fills, cash, fractional position quantity, cost basis, realized and unrealized profit or loss, commissions, equity and maximum drawdown. Orders link decision receipts to later quote receipts used for fills. Saved results, configuration and paper-account receipt checkpoints survive restart in SQLite. Paper accounts warm up from existing observations and trade only on future eligible signals. A backtest evaluates the historical decisions sequentially through a frozen receipt watermark.
 
-SQLite preserves logical identities, immutable revisions, every normalized receipt, accepted current heads, and feed transitions. The ledger exposes receipt and observation IDs, source and receipt times, revisions, disposition, and candle completeness. Read-only playback opens a recent receipt window with an as-of checkpoint and supports pause, restart, seeking, and speed. **RECORDED REPLAY** identifies playback while live collection continues in the background. The paginated API can retrieve the full history.
+Part 4.1's live chart, volume, feed health, observation ledger, read-only replay and outage controls continue to work. The previous submission is preserved in [its archived report](docs/reports/part-4-1.md).
 
-The opt-in outage control beside the chart stops Yahoo socket and HTTP collection. Both channels become unavailable, counts stop growing, source ages increase, and the chart retains committed data. After reconnect, the live badge requires a fresh pricing message for the selected symbol on the new Yahoo connection. Controls are disabled by default and restricted to the same origin.
+## Design and execution decisions
 
-## Design decisions
+The defaults are 9/21 completed one-minute bars, $10,000 starting cash, 10 basis points commission per side and 5 basis points adverse slippage. These are editable modeling assumptions. They were chosen before inspecting the strategy result. A short SMA crossing upward submits a buy with 95% of cash while flat. A downward cross sells the held position. Equality alone does not create a signal.
 
-| Concern | Implemented rule |
+Each decision uses only data already received. The server fills an order on the next eligible quote receipt after its signal, at the quote price adjusted for slippage. A completed candle can arrive after the following minute has opened, so using that earlier open would assign a fill before the decision. A signal must arrive within two minutes of the candle end, and a fill quote must be within 60 seconds of its source time. An order with no eligible quote within five minutes expires when a subsequent quote is processed.
+
+The account consumes the first accepted completed observation of each increasing source minute once. Later corrections stay inspectable in the market ledger and do not rewrite past account decisions. Current chart overlays use accepted snapshot heads, so corrections can change their historical appearance. The recorded decision and fill IDs support tracing the difference.
+
+Decimal arithmetic rounds cash, notional and commissions to cents, and quantities down to eight decimals. Entry cost includes the buy fee. Realized P&L is net sell proceeds minus entry cost. Unrealized P&L is the last observed quote value minus entry cost. The invariant is `equity = starting cash + realized P&L + unrealized P&L`. Open positions remain marked at test end. [Full execution and schema notes](docs/part-4-2-design.md) · [core implementation](server/strategy.py)
+
+## Verification and results
+
+| Check | Result |
 | --- | --- |
-| Identity and timing | Candle identity is source/kind/symbol/interval/UTC minute start. Preserve provider time separately from local receipt time and order chart snapshots by request start time, a local ordering token rather than a claimed provider revision timestamp. |
-| Duplicate | Add a distinct receipt referencing existing content, without double volume or a false revision. A newer duplicate advances the ordering watermark. |
-| Revised / out-of-order | Append changed content immutably. Apply newer/equal-order revisions; retain older differing responses as superseded without replacing the accepted head. A newer return to an old value is a legitimate revision. |
-| Completeness | A fetched candle is complete if its minute ended by request start time. A closed market's final minute can complete without waiting for a new bar. An older partial cannot reopen a newer completed head. Completeness is persisted with the observation, not invented by a replay/UI timer. |
-| Volume and replay | Use Yahoo's reported OHLCV and preserve null when volume is missing. The browser starts from a saved checkpoint, freezes a receipt watermark, and applies accepted records in original receipt order. Replay is read-only. |
+| Automated behavioral and integration tests | 44 tests cover the existing market contract, pandas reference comparisons, batch/incremental/Vue equivalence, crossovers and equality, unfinished candles, late revisions, duplicate retries, cost arithmetic, drawdown, prefix causality, account persistence, and FastAPI validation. [Test output](evidence/part-4-2-tests.txt) · [strategy tests](tests/test_strategy.py) |
+| Vue typecheck and production build | Passed. [Build output](evidence/part-4-2-build.txt) |
+| Genuine recorded data and accounting | The isolated sample has 2,917 historical Yahoo receipts, 108 completed candles, five crossovers and five simulated fills. Every fill follows its signal receipt. Equity reconciles, market rows are preserved, and the saved result survives reopening SQLite. [Results with orders and fills](evidence/part-4-2-verification.json) · [repeatable verification](scripts/verify_strategy.py) |
+| Browser | Verified chart SMA values and markers, parameter validation, backtest controls, account metrics and equity curve, order/fill tables, saved results, paper-account start, and connection recovery after the query-index correction. [Detailed verification](docs/part-4-2-verification.md) |
+| Fresh checkout and GitHub checks | Final clean-checkout result and observed push-check status are documented with their tested version. [Verification notes](docs/part-4-2-verification.md) · [GitHub workflow](.github/workflows/checks.yml) |
 
-The relevant generated code is [MarketStore._ingest_one](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/server/store.py): duplicate equality reuses the immutable observation but still upserts a newer `heads.ordering_time`. This prevents a slow differing response from an older request overwriting a newer unchanged fetch. [The store tests](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/tests/test_store.py) exercise that sequence, revisions/reversions, superseded arrivals, completion, persistence, and replay reconstruction.
+The fixed historical sample finishes with **$9,909.38 equity**, **$496.34 cash**, **0.13095891 BTC**, **−$73.31 realized P&L**, **−$17.31 unrealized P&L**, and **$47.28 in fees**. Return is **−0.9062%** and maximum drawdown is **0.9112%**. The open position remains marked to the last quote. The longer local database produces a different result because it covers additional observations. Profitability was not used as a completion criterion.
 
-## Revised approach and process evidence
+The calculation reference is pandas `rolling(...).mean()`, using a full window and independent crossover comparisons. Tests invoke the actual Vue TypeScript calculator through Node and compare it and the Python batch/incremental outputs to that reference. [pandas rolling documentation](https://pandas.pydata.org/docs/reference/api/pandas.Series.rolling.html)
 
-The initial short Part 4.1 excerpt did not state a framework requirement, and the linked overview required university authentication. The first React/Express prototype therefore failed the explicit stack requirement supplied later in the pasted overview. It was replaced with Vue/FastAPI while retaining schema v1, original row IDs, immutable payloads, revisions, and receipts. [Preservation evidence](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/migration-preservation.json) compares all original columns of previously captured rows and confirms integrity. The Python store compares decoded payloads so numeric JSON formatting (`1` versus `1.0`) does not create false migration revisions.
+## Revised approach and disclosure
 
-An actual Python pricing-socket TLS failure reported a missing trusted issuer while chart HTTP requests succeeded. [The adapter](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/server/yahoo.py) now uses certifi's trusted CA roots with certificate and hostname verification still enabled. Regression tests check the SSL settings, and separate live evidence confirms Yahoo messages arrive. The initial Python test pass also exposed socket-shutdown cancellation and a retry-status timing assumption; lifecycle cleanup and event-based waiting corrected them. The final-candle rule was revised after the overview clarified interval-end semantics, with a regression test for an ended final bar. [The curated log](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/docs/evidence-log.md) connects instruction excerpts, failures, generated artifacts, checks, decisions, and uncertainty. Full chats, credentials, and private browser content are excluded.
+During browser verification, the growing market history caused four-second candle queries for each symbol. The initial four-symbol WebSocket snapshot exceeded the browser's connection deadline. Adding an index on `heads(observation_id)` reduced the same local queries to approximately 2–3 milliseconds per symbol, and the browser displayed the live chart and SMAs. The first Vue typecheck also caught a marker generic mismatch, corrected using the chart library's `Time` type. [Curated evidence log](docs/evidence-log.md)
 
-[AI-USE.md](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/AI-USE.md) discloses Codex, the known model-family information, tools, and the revised framework choice. I recorded and narrated the demonstration. Codex trimmed my original Kaltura recording to fit the assignment's time limit.
+Codex generated and revised the source, tests, controls, docs, and report, and ran the recorded verification. Its disclosed environment identifies the GPT-6 model family. Exact deployed model metadata was unavailable. The student supplies the demonstration recording and should be able to explain the implementation. [Tool and model disclosure](AI-USE.md)
 
-## Verification
+## Startup, reproduction and limits
 
-| Check | Observed result |
-| --- | --- |
-| Python/FastAPI tests | **30 passed, 0 failed.** Covers duplicates, revisions, out-of-order arrivals, the replay checkpoint, persistence across restarts, final-bar completion, protocol decoding, HTTP 429, in-flight outages, TLS, reconnect, validation, and commit-before-broadcast. [Actual output](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/test-results.txt) · [tests](https://github.com/abn54/Live-Marketstation-/tree/a0d0d898d972c0401c90232e9d5ad41caad9f6be/tests). |
-| Vue build | Typechecking and production build passed. [Output](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/build-results.txt). |
-| Genuine live path | **13 checks passed** on November 9. The independent client received a fresh Yahoo quote and an applied candle over FastAPI's WebSocket and matched them to SQLite records. It also checked real outage and recovery, replay, and database integrity. [Current live evidence](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/demo-live-verification.json). |
-| Exact replay | **40,159 BTC receipts** through a frozen watermark reproduced all **360 displayed candles**, including IDs, closes, volume, and completeness. Replay made no observation writes. [Evidence](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/demo-live-verification.json). |
-| Fresh checkout | **Passed** in 31.03 seconds at source commit `31c69e0`. A new clone completed locked installs, 30 tests, the Vue build, isolated recording import, and production HTTP and WebSocket checks. [Redacted results](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/clean-checkout.json). |
-| GitHub checks | The workflow runs tests, the Vue build, and isolated recording import on pushes. [Workflow runs](https://github.com/abn54/Live-Marketstation-/actions) · [workflow](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/.github/workflows/checks.yml). |
-| Browser | The updated production app showed live candles and volume, a readable ledger at 556 CSS pixels, and replay with restart, pause, and seeking. The intentional outage retained the chart and reconnect delivered a fresh quote. The earlier browser run also checked development proxying, symbol changes, and closed-equity freshness. [Recording rehearsal](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/demo-readiness.json) · [earlier browser QA](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/evidence/browser-qa.json). |
+The README documents Python >=3.12 and Node >=24, creating `.venv`, installing locked requirements, `npm ci`, `npm run db:init`, and `npm run dev`. `npm run build` and `npm start` serve the production app on localhost. Schema initialization adds the run table and join index while preserving market records. Yahoo requires no credentials. [README](README.md) · [agent instructions](AGENTS.md) · [schema](server/schema.sql)
 
-At the November 9 recovery checkpoint, the verification database held **56,193 observations, 14,002 revisions, 135,691 receipts, and 79,498 duplicate receipts**. Naturally out-of-order responses did not occur in this capture. Automated tests inject them to verify how the store responds.
+`npm run strategy:verify` imports the committed genuine recording into temporary SQLite and reproduces the stated result. Synthetic test examples are explicitly labeled. Browser replay and backtests retain their historical labels when live data is stale or unavailable. [Recorded sample](evidence/part-4-2-recording.json)
 
-The demonstration shows the live Yahoo chart and feed health, the SQLite observation ledger, recorded replay, and the retained chart during an intentional outage followed by recovery. I explain why the server commits updates to SQLite before broadcasting them over WebSockets.
+This is a long-only simulation with one chosen symbol, fractional units, full fills and modeled costs. It omits spread/depth, partial fills, market impact, taxes and corporate actions. Gaps remain in the data. Marked open P&L excludes a hypothetical final exit fee. Missing or delayed quotes reduce fills. The sample's instrument selection introduces selection/survivorship concerns, and tuning on it risks overfitting. A historical result cannot establish future performance. The UI displays the latest 20 saved runs and 30 trade rows per table. Full saved results remain available through the API, and each creation is bounded to 500,000 symbol receipts.
 
-## Supporting documents and startup
-
-[README](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/README.md) documents Python >=3.12 and Node >=24 setup: create `.venv`, install `requirements.txt`, run `npm ci`, `npm run db:init`, then `npm run dev` and open `http://127.0.0.1:3000`. Development proxies to FastAPI on 8000; `npm run build` and `npm start` serve the built Vue app directly from FastAPI. Initialization is idempotent and restart retains records. No credentials are required or exposed; runtime environment/database files are ignored.
-
-[Agent instructions](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/AGENTS.md) · [Design/data flow/schema explanation](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/docs/design.md) · [Schema SQL](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/server/schema.sql) · [Overview-to-scope mapping](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/docs/assignment-scope.md) · [Detailed verification/limits](https://github.com/abn54/Live-Marketstation-/blob/a0d0d898d972c0401c90232e9d5ad41caad9f6be/docs/verification.md).
-
-## Remaining limitations and submission
-
-Yahoo can lag, stop, revise data, or rate limit access. Quotes stream upstream and the server polls candles every 15 seconds. Candle completion records that the interval had ended at fetch time. Three-minute overlap polling may miss older corrections until another backfill. SQLite retains the full log without automatic retention. The chart loads up to 360 bars, and the browser replays up to 800 recent receipts at receipts per second. Older receipts are available through the paginated API.
-
-This submission covers **Part 4.1**. The repository holds the source, supporting evidence, and demonstration. **Upload only this `report.md` to Canvas.**
+Upload **only this `report.md`** to Canvas after adding the accessible Part 4.2 video link. The source and supporting evidence remain in the public repository.

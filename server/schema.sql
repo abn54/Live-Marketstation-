@@ -39,4 +39,16 @@ CREATE TABLE IF NOT EXISTS feed_events (
 CREATE INDEX IF NOT EXISTS observations_symbol_kind_time ON observations(symbol,kind,source_time);
 CREATE INDEX IF NOT EXISTS observations_identity ON observations(logical_id,id DESC);
 CREATE INDEX IF NOT EXISTS receipts_observation ON receipts(observation_id,id);
+CREATE INDEX IF NOT EXISTS heads_observation ON heads(observation_id);
+CREATE TABLE IF NOT EXISTS simulation_runs (
+  id TEXT PRIMARY KEY,
+  mode TEXT NOT NULL CHECK (mode IN ('paper','backtest')),
+  status TEXT NOT NULL CHECK (status IN ('running','paused','finished')),
+  symbol TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  until_receipt INTEGER NOT NULL,
+  config_json TEXT NOT NULL CHECK (json_valid(config_json)),
+  state_json TEXT NOT NULL CHECK (json_valid(state_json))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS simulation_one_running_symbol ON simulation_runs(symbol) WHERE status='running';
 PRAGMA user_version = 1;

@@ -21,6 +21,8 @@ import {
   Wifi,
 } from "@lucide/vue";
 import MarketChart from "./MarketChart.vue";
+import StrategyPanel from "./StrategyPanel.vue";
+import { calculateIndicators } from "./indicators";
 import type {
   Feed,
   Observation,
@@ -44,6 +46,9 @@ const blank = (symbol: string): SymbolData => ({
 });
 const data = shallowRef<Record<string, SymbolData>>({});
 const selected = ref("BTC-USD");
+const fast = ref(9),
+  slow = ref(21),
+  strategyPanel = ref<HTMLElement | null>(null);
 const feed = shallowRef<Feed>({
   stream: { state: "connecting", detail: "Connecting to FastAPI" },
   chart: { state: "connecting", detail: "Waiting for candles" },
@@ -251,6 +256,13 @@ const shown = computed(() =>
   mode.value === "replay" ? replayData.value : live.value,
 );
 const last = computed(() => shown.value.candles.at(-1));
+const sma = computed(() =>
+  calculateIndicators(shown.value.candles, fast.value, slow.value),
+);
+const latestSma = computed(() => sma.value.at(-1));
+const lastCross = computed(() =>
+  sma.value.filter((point) => point.signal).at(-1),
+);
 const quote = computed(() => shown.value.quote);
 const price = computed(() => quote.value?.price ?? last.value?.close);
 const change = computed(
@@ -436,6 +448,14 @@ function toggleReplay() {
       <div class="rail-bottom">
         <button
           class="rail-button"
+          aria-label="Strategy laboratory"
+          title="Strategy laboratory"
+          @click="strategyPanel?.scrollIntoView({ block: 'start' })"
+        >
+          <Layers3 :size="21" />
+        </button>
+        <button
+          class="rail-button"
           aria-label="About this workstation"
           @click="help = !help"
         >
@@ -477,7 +497,7 @@ function toggleReplay() {
           </div>
         </div>
         <div v-if="help" class="notice">
-          Part 4.1 · Vue 3 + FastAPI + SQLite. Yahoo quotes stream over
+          Parts 4.1–4.2 · Vue 3 + FastAPI + SQLite. Yahoo quotes stream over
           WebSockets; one-minute OHLCV is fetched every
           {{ feed.pollMs / 1000 }}s and streamed after a SQLite commit. Times
           are UTC. Replay is recorded and read-only. TradingView Lightweight
@@ -548,18 +568,28 @@ function toggleReplay() {
                   :disabled="replayLoading"
                   @click="startReplay"
                 >
-                  <FileClock :size="13" />{{ replayLoading ? "Loading…" : "Replay" }}
+                  <FileClock :size="13" />{{
+                    replayLoading ? "Loading…" : "Replay"
+                  }}
                 </button>
               </div>
             </div>
             <div v-if="demo" class="demo-bar">
               <span :class="{ amber: !collectorGood }" aria-live="polite">{{
-                feedUnavailable ? "Yahoo unavailable · saved chart" :
-                collectorGood ? "Yahoo source live" : "Waiting for Yahoo"
+                feedUnavailable
+                  ? "Yahoo unavailable · saved chart"
+                  : collectorGood
+                    ? "Yahoo source live"
+                    : "Waiting for Yahoo"
               }}</span>
               <button :disabled="feedPending || !connected" @click="toggleFeed">
-                <Wifi v-if="feed.paused" :size="13" /><Unplug v-else :size="13" />{{
-                  feed.paused ? "Reconnect Yahoo feed" : "Demonstrate feed outage"
+                <Wifi v-if="feed.paused" :size="13" /><Unplug
+                  v-else
+                  :size="13"
+                />{{
+                  feed.paused
+                    ? "Reconnect Yahoo feed"
+                    : "Demonstrate feed outage"
                 }}
               </button>
             </div>
@@ -619,6 +649,8 @@ function toggleReplay() {
                 :candles="shown.candles"
                 :symbol="`${selected}:${mode}`"
                 :fit-key="fitKey"
+                :fast="fast"
+                :slow="slow"
               />
               <div v-if="!shown.candles.length" class="chart-empty">
                 <ChartCandlestick :size="28" /><strong>{{
@@ -634,6 +666,22 @@ function toggleReplay() {
               <div v-if="mode === 'replay'" class="replay-watermark">
                 RECORDED
               </div>
+            </div>
+            <div class="sma-strip" aria-label="Completed-candle indicators">
+              <span class="fast-sma"
+                >SMA {{ fast }}
+                <b>{{ money(latestSma?.fast ?? undefined) }}</b></span
+              >
+              <span class="slow-sma"
+                >SMA {{ slow }}
+                <b>{{ money(latestSma?.slow ?? undefined) }}</b></span
+              >
+              <span>{{
+                lastCross
+                  ? `${lastCross.signal === "buy" ? "Upward" : "Downward"} cross · ${time(lastCross.time)}`
+                  : "Warming up / no crossover in this window"
+              }}</span>
+              <small>Completed candles · forming candle excluded</small>
             </div>
             <div class="chart-footer">
               <span
@@ -674,7 +722,8 @@ function toggleReplay() {
                 :max="records.length"
                 v-model.number="cursor"
                 @input="playing = false"
-              /><span :title="`${records.length} recent saved receipts`">{{ cursor }} / {{ records.length }}</span
+              /><span :title="`${records.length} recent saved receipts`"
+                >{{ cursor }} / {{ records.length }}</span
               ><select aria-label="Replay speed" v-model.number="speed">
                 <option :value="1">1 receipt/s</option>
                 <option :value="4">4 receipts/s</option>
@@ -801,7 +850,9 @@ function toggleReplay() {
                 >
               </div>
               <button class="full-button" @click="showEvidence('observations')">
-                <Activity :size="14" />View observation ledger<ChevronRight :size="15" />
+                <Activity :size="14" />View observation ledger<ChevronRight
+                  :size="15"
+                />
               </button>
             </section>
             <section class="session-note">
@@ -810,10 +861,24 @@ function toggleReplay() {
                 Every update has a source.<br />Every revision leaves a record.
               </p>
               <div>
-                <Layers3 :size="14" />Part 4.1 · Market data &amp; dashboard
+                <Layers3 :size="14" />Part 4.2 · Indicators &amp; simulated
+                trading
               </div>
             </section>
           </aside>
+        </div>
+        <div ref="strategyPanel" class="strategy-anchor">
+          <StrategyPanel
+            :symbol="selected"
+            :fast="fast"
+            :slow="slow"
+            @windows="
+              (f, s) => {
+                fast = f;
+                slow = s;
+              }
+            "
+          />
         </div>
         <section ref="evidencePanel" class="panel evidence-panel">
           <div class="evidence-tabs">
@@ -864,8 +929,12 @@ function toggleReplay() {
                       ><span class="dot muted-dot" />{{ r.source }}</span
                     >
                   </td>
-                  <td data-label="Source time" :title="iso(r.sourceTime)">{{ time(r.sourceTime) }}</td>
-                  <td data-label="Received" :title="iso(r.receiptTime)">{{ time(r.receiptTime) }}</td>
+                  <td data-label="Source time" :title="iso(r.sourceTime)">
+                    {{ time(r.sourceTime) }}
+                  </td>
+                  <td data-label="Received" :title="iso(r.receiptTime)">
+                    {{ time(r.receiptTime) }}
+                  </td>
                   <td data-label="Value">${{ money(r.price ?? r.close) }}</td>
                   <td data-label="Revision">
                     <span class="revision">v{{ r.revision }}</span>
@@ -873,7 +942,11 @@ function toggleReplay() {
                   <td>
                     <span :class="['disposition', r.disposition]"
                       >{{
-                        r.kind === "candle" ? (r.complete ? "complete · " : "forming · ") : ""
+                        r.kind === "candle"
+                          ? r.complete
+                            ? "complete · "
+                            : "forming · "
+                          : ""
                       }}{{ r.disposition }}</span
                     >
                   </td>

@@ -1,5 +1,7 @@
 # Data flow and SQLite design
 
+Part 4.2 adds completed-bar indicators, persisted simulated accounts, and receipt-order backtests to this data flow. [The Part 4.2 design](part-4-2-design.md) specifies execution, accounting, the `simulation_runs` table, and the `heads_observation` index. The original observation schema and ingestion rules below continue to apply.
+
 ## Architecture
 
 ```mermaid

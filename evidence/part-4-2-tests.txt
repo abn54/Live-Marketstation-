@@ -1,0 +1,6 @@
+
+> live-market-workstation@1.1.0 test
+> node scripts/run-python.mjs -m pytest -q
+
+............................................                             [100%]
+44 passed in 1.62s

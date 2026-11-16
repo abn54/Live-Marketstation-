@@ -1,4 +1,4 @@
-# AI and tool disclosure — Assignment 4, Part 4.1
+# AI and tool disclosure — Assignment 4, Parts 4.1–4.2
 
 ## Coding agent and model
 
@@ -19,6 +19,12 @@ The student's instructions supplied the Part 4.1 requirements, repository destin
 | Prettier and Black | Formatted generated TypeScript/Vue/JavaScript and Python for review. |
 | macOS `say` (Samantha voice) and FFmpeg | Previously generated a narrated demo from UI captures. The user chose to record their own video. The generated media and assembler were withdrawn. |
 | GitHub Actions | Configured repeatable Python tests and Vue build checks on pushes and pull requests. Local clean-checkout results and observed remote CI status are distinguished in verification notes. |
+
+## Part 4.2 work on November 15
+
+Codex implemented the SMA overlays and crossover markers, receipt-driven paper account, persistent simulation snapshots, backtest controls, tests, offline evidence, and documentation. Defaults of 9/21 bars, $10,000 cash, 95% allocation, 10 bps fees and 5 bps slippage were implementation choices, with editable controls and explicit assumptions. The agent used pandas as an independent rolling-mean reference and Node to run the Vue calculator in the Python verification tests. It used FFmpeg in Part 4.1 to edit the student's recording. The Part 4.2 recording remains a student task.
+
+The Sites skill supplied local development and browser-verification guidance. The implementation uses the existing Vue/FastAPI checkout. Codex used primary pandas and TradingView documentation for calculation and execution-timing references, Black and Prettier for touched source files, and the supported browser tool for verification. The first Vue build exposed a marker generic-type mismatch, which was corrected with the chart library's `Time` type. Browser testing exposed slow joins on the larger market history, leading to the `heads_observation` index. These changes and their verification are recorded in the evidence log. No subagents were used.
 
 ## Revised choices and why
 

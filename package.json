@@ -13,6 +13,7 @@
     "db:init": "node scripts/run-python.mjs -m scripts.init_db",
     "test": "node scripts/run-python.mjs -m pytest -q",
     "evidence": "node scripts/capture-evidence.js",
+    "strategy:verify": "node scripts/run-python.mjs -m scripts.verify_strategy",
     "recording:import": "node scripts/run-python.mjs -m scripts.import_recording"
   },
   "dependencies": {

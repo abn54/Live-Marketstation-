@@ -1,0 +1,150 @@
+{
+  "origin": "Genuine Yahoo observations recorded November 12, 2026; simulated execution",
+  "dataset": "evidence/part-4-2-recording.json",
+  "config": {
+    "symbol": "BTC-USD",
+    "mode": "backtest",
+    "fast": 9,
+    "slow": 21,
+    "initialCash": 10000,
+    "feeBps": 10,
+    "slippageBps": 5
+  },
+  "checks": {
+    "fillsAfterDecision": true,
+    "quoteSourceAfterCandleEnd": true,
+    "equityReconciles": true,
+    "marketRecordsUnchanged": true,
+    "restartPersists": true
+  },
+  "processedReceipts": 2917,
+  "summary": {
+    "cash": 496.34,
+    "quantity": "0.13095891",
+    "costBasis": 9430.35,
+    "realizedPnl": -73.31,
+    "unrealizedPnl": -17.31,
+    "equity": 9909.38,
+    "fees": 47.28,
+    "returnPercent": -0.9062,
+    "maxDrawdownPercent": 0.9112,
+    "completedBars": 108,
+    "signals": 5,
+    "fills": 5,
+    "markPrice": "71877.828125"
+  },
+  "orders": [
+    {
+      "id": 1,
+      "side": "buy",
+      "signalTime": 1794502320000,
+      "decisionTime": 1794502395872,
+      "signalReceiptId": 1191,
+      "signalObservationId": 726,
+      "status": "filled"
+    },
+    {
+      "id": 2,
+      "side": "sell",
+      "signalTime": 1794503100000,
+      "decisionTime": 1794503167611,
+      "signalReceiptId": 1551,
+      "signalObservationId": 943,
+      "status": "filled"
+    },
+    {
+      "id": 3,
+      "side": "buy",
+      "signalTime": 1794504120000,
+      "decisionTime": 1794504193119,
+      "signalReceiptId": 2016,
+      "signalObservationId": 1218,
+      "status": "filled"
+    },
+    {
+      "id": 4,
+      "side": "sell",
+      "signalTime": 1794505140000,
+      "decisionTime": 1794505203166,
+      "signalReceiptId": 2487,
+      "signalObservationId": 1506,
+      "status": "filled"
+    },
+    {
+      "id": 5,
+      "side": "buy",
+      "signalTime": 1794506040000,
+      "decisionTime": 1794506100591,
+      "signalReceiptId": 2906,
+      "signalObservationId": 1759,
+      "status": "filled"
+    }
+  ],
+  "fills": [
+    {
+      "orderId": 1,
+      "side": "buy",
+      "quantity": "0.13222908",
+      "price": 71773.23587109376,
+      "notional": 9490.51,
+      "fee": 9.49,
+      "realizedPnl": 0.0,
+      "quoteObservationId": 728,
+      "receiptId": 1193,
+      "sourceTime": 1794502397000,
+      "receivedAt": 1794502398859
+    },
+    {
+      "orderId": 2,
+      "side": "sell",
+      "quantity": "0.13222908",
+      "price": 71650.375640625,
+      "notional": 9474.26,
+      "fee": 9.47,
+      "realizedPnl": -35.21,
+      "quoteObservationId": 945,
+      "receiptId": 1553,
+      "sourceTime": 1794503167000,
+      "receivedAt": 1794503170589
+    },
+    {
+      "orderId": 3,
+      "side": "buy",
+      "quantity": "0.13165421",
+      "price": 71832.8203359375,
+      "notional": 9457.09,
+      "fee": 9.46,
+      "realizedPnl": 0.0,
+      "quoteObservationId": 1220,
+      "receiptId": 2018,
+      "sourceTime": 1794504191000,
+      "receivedAt": 1794504194367
+    },
+    {
+      "orderId": 4,
+      "side": "sell",
+      "quantity": "0.13165421",
+      "price": 71686.9354765625,
+      "notional": 9437.89,
+      "fee": 9.44,
+      "realizedPnl": -38.1,
+      "quoteObservationId": 1507,
+      "receiptId": 2488,
+      "sourceTime": 1794505204000,
+      "receivedAt": 1794505206851
+    },
+    {
+      "orderId": 5,
+      "side": "buy",
+      "quantity": "0.13095891",
+      "price": 71938.0916953125,
+      "notional": 9420.93,
+      "fee": 9.42,
+      "realizedPnl": 0.0,
+      "quoteObservationId": 1760,
+      "receiptId": 2907,
+      "sourceTime": 1794506101000,
+      "receivedAt": 1794506103773
+    }
+  ]
+}

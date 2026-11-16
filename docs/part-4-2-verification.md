@@ -1,0 +1,32 @@
+# Part 4.2 verification
+
+Verification is performed on the Vue/FastAPI/SQLite workstation. Tests use injected values or isolated temporary databases. The committed receipt window contains genuine recorded Yahoo observations. Browser checks use the actual local production application and the existing market log.
+
+## Repeated checks
+
+Run `npm test`, `npm run build`, and `npm run strategy:verify`. The independent reference is pandas rolling arithmetic with full windows. Tests run the actual frontend calculator through Node, then compare every output and crossover to pandas and the incremental Python state. Known account examples check 95% sizing, fractional quantities, fees, adverse slippage, realized and unrealized P&L, equity reconciliation and drawdown.
+
+The 2,917-receipt historical sample is reproducible with SMA 9/21 and the defaults. It produces five fills and $9,909.38 ending equity. Its full orders and fills are in [the recorded verification](../evidence/part-4-2-verification.json). The verification checks receipt ordering, signal-candle end, unchanged market rows, and reopening the saved account. A paper-account test warms indicators, adds a new crossover and quote, and reopens SQLite to prove that the fill is retained exactly once.
+
+The no-look-ahead test fixes the prefix that creates and fills an order, adds later prices, and checks that the original decision and execution remain unchanged. Tests keep forming closes out of signals, prevent completed corrections and duplicate callbacks from trading twice, exclude late bootstrap instructions, preserve frozen backtests, and validate same-origin routes and invalid settings.
+
+## Browser recipe
+
+1. Open BTC-USD and confirm both chart lines, SMA values, crossover arrows and the forming-candle exclusion caption.
+2. Open Strategy laboratory. Run a historical backtest and inspect cash, equity, position, P&L, costs, drawdown, the equity curve, and orders/fills with their source receipt IDs.
+3. Enter a fast length greater than the slow length. Verify the run action is disabled with a readable validation message. Restore 9/21.
+4. Start a paper account, confirm its simulated label and initial cash balance, and verify that the existing history warms the averages without generating retrospective orders.
+5. Refresh and reload saved experiments. Inspect Orders & decisions, switch symbols and modes, pause the account, and confirm saved results persist.
+6. Exercise a narrow layout and check that each new panel and its inputs remain usable.
+
+The historical backtest on the larger local database yielded 201 fills, including buys and sells. The fixed sample is used for stable assertions because the live database grows over time. Run parameters, receipt watermark and period are displayed with each result.
+
+The saved paper account recovered after backend restart and page reload. Later genuine receipts had produced nine crosses and seven simulated fills. Pausing retained those results. BTC/ETH navigation restored the appropriate symbol state. Both 556px and 1440px layouts were checked, and no browser console errors were observed. [Browser observations](../evidence/part-4-2-browser.json) · [SMA chart](../evidence/part-4-2-indicators.jpg) · [Account and backtest](../evidence/part-4-2-dashboard.jpg)
+
+## Failed/revised observations
+
+Before the new join index, BTC/ETH/SPY candle queries on the larger history took about four seconds each. After `heads_observation`, the same queries took about 2–3 ms, and a browser reload restored live chart data and indicator values. The query timing is an observed local measurement. The marker plugin's initial generic type mismatch was caught by vue-tsc and corrected before browser verification.
+
+## Submission status
+
+The code, fixed recorded test, repeatable checks, documentation and evidence support Part 4.2. The student's accessible 30–60 second Part 4.2 recording link is pending. The report will pin the verified implementation and evidence commit. Part 4.1's submitted report remains archived separately.

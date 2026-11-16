@@ -1,0 +1,19 @@
+{
+  "checkedOn": "2026-11-15 America/New_York",
+  "application": "Production Vue build served by FastAPI on 127.0.0.1:3000",
+  "observations": {
+    "actualYahooFeed": "LIVE FEED with completed-bar SMA 9 and SMA 21 values",
+    "chart": "Blue fast and amber slow lines, crossover arrows, and forming-candle exclusion caption visible",
+    "backtest": "Saved historical experiment showed 225 crossover decisions and 201 simulated fills, with USD cash, position, equity, P&L, fees and drawdown",
+    "ordersAndFills": "Both tables accessible. Thirty saved rows and their receipt IDs were displayed",
+    "invalidSettings": "Setting fast 25 and slow 21 disabled Run backtest and showed the constraint; restored 9/21",
+    "paperStart": "Created a paper account with $10,000, zero retrospective orders and a historical indicator warm-up",
+    "paperPersistence": "Same account recovered after backend restart and page reload. Later genuine receipts had produced nine crosses and seven simulated fills",
+    "paperPause": "Pause changed its status to PAPER ACCOUNT · PAUSED and retained its fills",
+    "symbolChange": "ETH-USD showed its own history state. Returning to BTC-USD restored the saved BTC result",
+    "layouts": "556 CSS px had no document overflow; trade tables scroll inside their container. 1440 CSS px displayed the account and equity curve together",
+    "consoleErrors": 0
+  },
+  "screenshots": ["part-4-2-indicators.jpg", "part-4-2-dashboard.jpg"],
+  "boundaries": "These browser observations use the growing local database. The separate fixed historical sample is used for stable numerical assertions. Every fill is simulated."
+}

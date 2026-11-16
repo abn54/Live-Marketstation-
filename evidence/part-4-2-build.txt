@@ -1,0 +1,13 @@
+
+> live-market-workstation@1.1.0 build
+> vue-tsc --noEmit && vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 2062 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.92 kB │ gzip:   0.55 kB
+dist/assets/index-LZXeSEkM.css   24.32 kB │ gzip:   6.15 kB
+dist/assets/index-P6_RS9Tk.js   294.91 kB │ gzip: 101.02 kB
+✓ built in 1.41s

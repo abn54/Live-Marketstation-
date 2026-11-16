@@ -1,4 +1,4 @@
-# Assignment overview → Part 4.1 scope
+# Assignment overview → Parts 4.1–4.2 scope
 
 The user supplied the complete Assignment 4 overview as pasted text after the initial implementation. This document records the applicable requirements without publishing the full course page or private authentication/session content.
 
@@ -15,8 +15,12 @@ The user supplied the complete Assignment 4 overview as pasted text after the in
 
 The overview's disclosure and evidence practices apply across the cumulative parts. The student explains the SQLite commit before WebSocket delivery in the combined recording. The report and curated log explain the revised approach and relevant generated code.
 
+## Part 4.2
+
+The user supplied the Part 4.2 submission requirements on November 15. The workstation now plots configurable SMA 9/21 lines and completed-bar crossover arrows. The simulated account applies those signals and persists orders, fills, cash, position, fees, realized and unrealized P&L. Historical backtests consume stored receipts through a frozen watermark. Tests compare Python batch and incremental averages and Vue calculations against pandas, check known account examples, and verify restart and causality rules. [Design and assumptions](part-4-2-design.md) · [Verification](part-4-2-verification.md)
+
 ## Deferred to later parts
 
-Part 4.2 adds two SMAs/crossovers, simulated accounting/execution, and historical backtesting. Part 4.3 adds checked AI decisions, automated simulated actions, a grounded chatbot, chart-image interpretation, and two-way live audio. Part 4.4 is the assigned in-class presentation. None of these later capabilities is claimed complete in Part 4.1. CSV loading is ungraded practice; deployment and a mobile build are not required.
+Part 4.3 adds checked AI decisions, automated actions that incorporate those decisions, a grounded chatbot, chart-image interpretation, and two-way live audio. Part 4.4 is the assigned in-class presentation. CSV loading is ungraded practice. Deployment and mobile builds are outside the requested scope.
 
-Completeness is already preserved to support later provisional/completed-bar decisions, but there are no indicators or signals in this deliverable. The current backend does not call a model or live-audio provider and needs no model credentials. A responsive layout check is merely a browser check, not a claimed mobile build.
+Part 4.2's signals use persisted completed candles. Part 4.3 will introduce model and live-audio providers.

@@ -20,9 +20,10 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .store import MAX_SAFE_INTEGER, MarketStore
+from .simulation import Simulations
 from .yahoo import SYMBOLS, YahooFeed, now_ms
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -32,6 +33,23 @@ load_dotenv(ROOT / ".env", override=False)
 class DemoAction(BaseModel):
     model_config = ConfigDict(extra="forbid")
     action: Literal["disconnect", "reconnect"]
+
+
+class Experiment(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    symbol: str
+    mode: Literal["paper", "backtest"] = "backtest"
+    fast: int = Field(9, ge=2, le=199)
+    slow: int = Field(21, ge=3, le=200)
+    initialCash: float = Field(10000, ge=100, le=1000000, multiple_of=0.01)
+    feeBps: float = Field(10, ge=0, le=100)
+    slippageBps: float = Field(5, ge=0, le=100)
+
+    @model_validator(mode="after")
+    def valid_windows(self):
+        if self.fast >= self.slow:
+            raise ValueError("Fast SMA must be shorter than slow SMA")
+        return self
 
 
 def same_origin(headers):
@@ -78,6 +96,7 @@ def create_app(
                 queue.put_nowait(None)
 
     async def on_data(results):
+        app.state.simulations.sync()
         await publish(
             dict(type="observations", results=results, stats=app.state.store.stats())
         )
@@ -102,6 +121,8 @@ def create_app(
         app.state.store = store or MarketStore(
             os.getenv("DATABASE_PATH", "./data/market.sqlite")
         )
+        app.state.simulations = Simulations(app.state.store)
+        app.state.simulations.sync()
         app.state.feed = feed_factory(
             store=app.state.store, poll_ms=poll_ms, on_data=on_data, on_status=on_status
         )
@@ -165,6 +186,34 @@ def create_app(
     async def events():
         return dict(events=app.state.store.events())
 
+    @app.post("/api/simulations")
+    def create_simulation(request: Request, body: Experiment):
+        if not same_origin(request.headers):
+            raise HTTPException(403, "Same-origin request required")
+        valid_symbol(body.symbol)
+        return app.state.simulations.create(body.model_dump())
+
+    @app.get("/api/simulations")
+    def list_simulations(symbol: str):
+        valid_symbol(symbol)
+        return dict(runs=app.state.simulations.list(symbol))
+
+    @app.get("/api/simulations/{run_id}")
+    def simulation(run_id: str):
+        try:
+            return app.state.simulations.get(run_id)
+        except KeyError:
+            raise HTTPException(404, "Simulation not found")
+
+    @app.post("/api/simulations/{run_id}/pause")
+    def pause_simulation(run_id: str, request: Request):
+        if not same_origin(request.headers):
+            raise HTTPException(403, "Same-origin request required")
+        try:
+            return app.state.simulations.pause(run_id)
+        except KeyError:
+            raise HTTPException(404, "Simulation not found")
+
     @app.get("/api/replay")
     async def replay(
         symbol: str,
@@ -188,7 +237,9 @@ def create_app(
     def recent_replay(symbol: str, limit: int = Query(800, ge=1, le=2000)):
         valid_symbol(symbol)
         return dict(
-            mode="recorded", symbol=symbol, **app.state.store.recent_replay(symbol, limit)
+            mode="recorded",
+            symbol=symbol,
+            **app.state.store.recent_replay(symbol, limit),
         )
 
     @app.post("/api/demo/feed")

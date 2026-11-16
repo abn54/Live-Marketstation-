@@ -1,5 +1,7 @@
 # Verification and evidence — required Vue/FastAPI stack
 
+This document records the Part 4.1 checks. [Current Part 4.2 verification](part-4-2-verification.md) covers SMAs, accounting, historical execution, browser checks, and the updated clean checkout.
+
 Verified November 7 and rechecked November 9, 2026 with Vue 3, Python 3.12, FastAPI, and disk-backed SQLite. Locked dependency versions are in `requirements.txt` and `package-lock.json`. Node >=24 runs frontend tooling, the launcher, and an independent evidence client. The earlier React/Express prototype is a disclosed revised approach in Git history.
 
 ## Results

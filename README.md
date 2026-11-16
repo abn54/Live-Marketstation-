@@ -1,6 +1,6 @@
 # Marketstation · Live Market Workstation
 
-IST 402 — Assignment 4, Part 4.1. A **Vue 3 frontend, Python FastAPI backend, and SQLite database on localhost**, with genuine Yahoo streaming quotes, updating one-minute candlesticks and volume, browser WebSockets, and persistent replay.
+IST 402 — Assignment 4 through Part 4.2. A **Vue 3 frontend, FastAPI backend, and SQLite database on localhost**, with live Yahoo data, candlesticks and volume, SMA crossovers, persistent paper accounts, and historical backtesting.
 
 [Submission report](report.md) · [Design/schema](docs/design.md) · [Verification](docs/verification.md) · [AI/tool disclosure](AI-USE.md) · [Curated process evidence](docs/evidence-log.md)
 
@@ -39,6 +39,25 @@ Optional configuration: copy `.env.example` to `.env` and restart. Defaults: `HO
 - **Observation ledger** shows receipt IDs, logical identity (hover the symbol), source/receipt timestamps (hover for full ISO dates), revisions, and duplicate/revised states. **Data pipeline** shows Yahoo → SQLite commit → FastAPI WebSocket → Vue chart.
 - Candles/volume share a UTC axis. Use fit, zoom, and pan. Unknown volume is a gap; reported zero stays zero. TradingView Lightweight Charts renders both series.
 
+## SMA strategy, simulated account, and backtesting
+
+The chart overlays **SMA 9** in blue and **SMA 21** in amber, with arrows at their crossovers. Both averages use completed candle closes. The caption explicitly identifies the excluded forming candle. Lengths can be changed in **Strategy laboratory**, using the layers icon near the bottom of the left rail or by scrolling below the chart.
+
+**Historical backtest → Run backtest** processes all saved receipts for the selected symbol through a frozen watermark. It shows account equity, cash, position quantity, cost basis, realized and unrealized P&L, fees, drawdown, an equity curve, and order/fill history with decision and execution receipt IDs. Saved runs stay fixed when new data arrives.
+
+**Paper account → Start paper account** creates a persistent simulated account. Earlier candles warm up the averages, and future completed-bar crosses drive orders. One running account per symbol is allowed. Repeating Start with the same configuration returns the existing account. Pause it before changing its settings. Backend collection and accounting continue while the browser is closed, and restart catches up from the saved receipt cursor.
+
+Defaults are a $10,000 balance, SMA 9/21, 10 basis points commission per side, and 5 basis points adverse slippage. An upward cross buys with 95% of cash; a downward cross sells the position. Fills use the next eligible observed quote after the decision. Read [the complete execution and accounting rules](docs/part-4-2-design.md) before interpreting a result.
+
+To reproduce a backtest without a live market, import the genuine November 12 BTC recording into an isolated database and run the app against it:
+
+```sh
+DATABASE_PATH=./data/strategy-offline.sqlite npm run recording:import -- evidence/part-4-2-recording.json
+DATABASE_PATH=./data/strategy-offline.sqlite npm start
+```
+
+The fixed sample yields five simulated fills and $9,909.38 ending equity under the defaults. It includes historical Yahoo prices and original source and receipt times. `npm run strategy:verify` reproduces those checks in a temporary database. Your main database contains a longer history and can yield different results.
+
 ## Persistence and recorded replay
 
 `server/schema.sql` defines schema v1. `observations` holds immutable content/revisions, `receipts` every normalized arrival, `heads` accepted current content and ordering watermark, and `feed_events` source state transitions. Candle JSON includes OHLCV and `complete`; times are UTC epoch milliseconds. The full [schema and ordering rules](docs/design.md) explain local IDs, provider identity, source/receipt times, revisions, and completion.
@@ -71,6 +90,7 @@ HTTP failures including 429, malformed data, timeouts, and socket closure expose
 ```sh
 npm test
 npm run build
+npm run strategy:verify
 ```
 
 `npm test` runs pytest behavioral tests and FastAPI WebSocket integration tests without contacting Yahoo or the working database. [GitHub Actions](.github/workflows/checks.yml) runs those checks and the Vue build on pushes/PRs. [Clean-checkout evidence](evidence/clean-checkout.json) records dependency installation, tests/build, isolated import, and production server HTTP/WebSocket startup from a checkout without `.venv`, node_modules, `.env`, dist, or an existing database.
@@ -85,7 +105,7 @@ The independent client asserts the required stack, receives fresh Yahoo quotes a
 
 ## Scope, disclosure, and limitations
 
-The full overview requires Vue, FastAPI, and SQLite. The earlier React/Express prototype was migrated when that requirement was supplied. [AI-USE.md](AI-USE.md) discloses the coding agent, known model information, tools, withdrawn generated demo, and revised approach. The [curated evidence log](docs/evidence-log.md) connects prompt excerpts, code, failures, tests, decisions, and uncertainty. The [submission report](report.md) links the student’s 59-second demonstration.
+The full overview requires Vue, FastAPI, and SQLite. The earlier React/Express prototype was migrated when that requirement was supplied. [AI-USE.md](AI-USE.md) discloses the coding agent, known model information, tools and revised approaches. The [evidence log](docs/evidence-log.md) connects instructions, code, failures, tests, decisions, and uncertainty. [The Part 4.1 report](docs/reports/part-4-1.md) preserves its original submission. The current [Part 4.2 report](report.md) awaits the student's new 30–60 second recording.
 
 Yahoo's public endpoints are unofficial and can change, delay data, or rate limit access. Quotes are not a complete trade tape. Candles use reported OHLCV instead of inferred minute volume from daily/rolling counters. Completeness means the minute had ended by the chart request start time; it is persisted with that fetched observation. A closed market's last bar can therefore complete without waiting for another bar. Outages do not invent finalizing snapshots, and later provider corrections remain possible. No exchange-session calendar is implemented.
 
