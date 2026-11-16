@@ -6,7 +6,7 @@ Student identifier **abn54** · November 16, 2026
 
 - **Repository** — [abn54/Live-Marketstation-](https://github.com/abn54/Live-Marketstation-).
 - **Implementation, evidence and video commit** — [b860421](https://github.com/abn54/Live-Marketstation-/commit/b860421af033eda3d258875cf581db08d92330d8). Application source is identical to the clean-checkout and CI-tested source commit `6c131ec`. A following report-only commit pins these links.
-- **Part 4.2 video** — [Watch the student-recorded demonstration (0:59)](https://cdn.jsdelivr.net/gh/abn54/Live-Marketstation-@b860421af033eda3d258875cf581db08d92330d8/evidence/part-4-2-student-demo.mp4). The clip shows SMA lines and crossovers, the completed-candle policy, backtest controls, simulated account and trade history, the equity curve, and the student's execution and verification explanation.
+- **Part 4.2 video** — [Download the student-recorded demonstration (MP4, 0:59)](https://raw.githubusercontent.com/abn54/Live-Marketstation-/b860421af033eda3d258875cf581db08d92330d8/evidence/part-4-2-student-demo.mp4). Open the downloaded MP4 in a video player; no GitHub sign-in is required. The clip shows SMA lines and crossovers, the completed-candle policy, backtest controls, simulated account and trade history, the equity curve, and the student's execution and verification explanation.
 
 ## Completed
 
