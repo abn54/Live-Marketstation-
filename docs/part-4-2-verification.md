@@ -29,4 +29,8 @@ Before the new join index, BTC/ETH/SPY candle queries on the larger history took
 
 ## Submission status
 
+A fresh `git clone --no-local` at source commit `6c131ec33604be858a77bfb6e8a0a048375b6d85` passed in **30.91 seconds**. It began without a virtual environment, Node modules, .env, build output or database. Locked installs, 44 tests, Vue build, isolated genuine recording import, production HTTP/WebSocket startup and a backtest with five fills succeeded. Its equity was $9,909.38. [Clean-checkout evidence](../evidence/part-4-2-clean-checkout.json)
+
+The GitHub Actions run for that source commit completed successfully. Tests, the Vue build, isolated import and recorded-strategy verification all passed. [Observed run](https://github.com/abn54/Live-Marketstation-/actions/runs/43801567690) · [captured status](../evidence/part-4-2-ci.json)
+
 The code, fixed recorded test, repeatable checks, documentation and evidence support Part 4.2. The student's accessible 30–60 second Part 4.2 recording link is pending. The report will pin the verified implementation and evidence commit. Part 4.1's submitted report remains archived separately.

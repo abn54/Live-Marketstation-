@@ -6,6 +6,8 @@
 - [Genuine recorded receipt sample](part-4-2-recording.json) · [verified simulated account](part-4-2-verification.json)
 - [Design and accounting](../docs/part-4-2-design.md) · [Part 4.2 verification](../docs/part-4-2-verification.md)
 - [Browser observations](part-4-2-browser.json) · [SMA chart](part-4-2-indicators.jpg) · [Account and backtest](part-4-2-dashboard.jpg)
+- [Part 4.2 clean checkout](part-4-2-clean-checkout.json)
+- [Observed successful GitHub Actions run](part-4-2-ci.json)
 
 ## Part 4.1
 
