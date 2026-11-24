@@ -1,0 +1,52 @@
+{
+  "commit": "331574169cc9565e3d5e814f5c4b77714a8c37e3",
+  "passed": true,
+  "steps": [
+    {
+      "name": "Python 3.12 virtual environment",
+      "passed": true
+    },
+    {
+      "name": "Locked Python dependencies",
+      "passed": true
+    },
+    {
+      "name": "npm ci",
+      "passed": true
+    },
+    {
+      "name": "76 Python and 8 voice-controller tests",
+      "passed": true
+    },
+    {
+      "name": "Vue typecheck/build",
+      "passed": true
+    },
+    {
+      "name": "Isolated database initialization",
+      "passed": true
+    },
+    {
+      "name": "Genuine receipt import",
+      "passed": true
+    },
+    {
+      "name": "Recorded SMA verification",
+      "passed": true
+    },
+    {
+      "name": "Mocked AI verification",
+      "passed": true
+    }
+  ],
+  "checks": {
+    "noPrivateEnvCopied": true,
+    "isolatedDatabase": true,
+    "productionHttp": true,
+    "actualFastAPIWebSocket": true,
+    "aiStatusWithoutCredentials": true,
+    "noMockFallbackForMissingKey": true
+  },
+  "harnessCorrection": "Production HTML uses the existing #root Vue mount, not #app; startup probe corrected and rerun",
+  "liveAIOrAudioClaimed": false
+}

@@ -1,10 +1,14 @@
 # Part 4.3 verification and outstanding evidence
 
-Status on November 23, 2026: implementation and local checks are available; successful live model/vision/audio evidence and the student's combined 30–60-second recording remain pending. Do not submit this work as complete yet.
+Status on November 24, 2026: implementation, **76 Python tests, 8 voice-controller tests, Vue build, recorded-strategy verification, mocked AI verification, clean-checkout startup and observed GitHub Actions** passed. Successful live model/vision/audio evidence and the student's combined 30–60-second recording remain pending. Do not submit this work as complete yet.
 
 ## Repeatable local checks
 
-Run `npm test`, `npm run build`, `npm run strategy:verify`, and `npm run ai:verify` from the repository root after the README's locked installs. Tests use memory/temporary SQLite; they do not contact Yahoo/OpenAI or modify the working database. Exact terminal output and clean-checkout results are linked from the report when collected.
+Run `npm test`, `npm run build`, `npm run strategy:verify`, and `npm run ai:verify` from the repository root after the README's locked installs. Tests use memory/temporary SQLite; they do not contact Yahoo/OpenAI or modify the working database. [Test output](../evidence/part-4-3-tests.txt) · [Build output](../evidence/part-4-3-build.txt)
+
+A fresh clone at source commit `331574169cc9565e3d5e814f5c4b77714a8c37e3`, without private env files, node_modules, a virtual environment, build output or the working database, completed locked installs and all checks. A separate production process served the built Vue client, exposed the expected HTTP/AI routes and a real FastAPI WebSocket snapshot, and correctly returned unavailable for an AI review without credentials instead of substituting a mock. The initial startup harness expected `#app`; it was corrected to the application's actual `#root` mount and startup was rerun. [Clean-checkout result](../evidence/part-4-3-clean-checkout.json) · [Selected clean-checkout output](../evidence/part-4-3-clean-checkout.txt)
+
+[GitHub Actions succeeded for the same source](https://github.com/abn54/Live-Marketstation-/actions/runs/45297522907). The actual run is recorded in [CI evidence](../evidence/part-4-3-ci.json). Subsequent documentation/evidence/report changes are distinguished from that tested source.
 
 `tests/test_ai.py` verifies strict schema/identity, finite confidence, SMA and confidence vetoes, hold, review-only behavior, idempotency, subsequent-quote fills and cash reconciliation, stale feed preflight, unavailable provider, changed controls/candle/outage during a request, late historical quotes, once-per-candle automation, restart persistence/disarming, chat/vision grounding and read-only behavior, origin/input validation, audio-session failure, redacted provider errors, strict outgoing schemas/image input, exhausted-credit classification and additive schema preservation.
 
@@ -26,12 +30,14 @@ A real HTTPS Responses call reached OpenAI and returned HTTP **429**, error type
 
 The secure key-save widget had earlier returned not approved. No key was created through that flow. The student subsequently saved their own key in ignored `.env.local`; verification detected its presence without printing it. The file is not part of Git, frontend assets, screenshots or the report. Credentials/private account identifiers are excluded from curated evidence.
 
+On November 24, checks initially skipped while the source was stale after the workstation resumed. Once current selected-symbol Yahoo messages and candles were available, the real decision endpoint was retried and still returned exhausted-credit unavailability. No model decision or simulated order was fabricated. That recheck is included in the live-provider artifact.
+
 ## Required remaining checks
 
 1. Use a funded provider project. Capture successful structured decision and grounded chat replies with actual returned model/reply IDs, context and check results. Demonstrate an eligible simulated outcome (including a legitimate hold if conditions call for it); retain mocked buy/sell tests separately.
 2. Submit the actual visible chart image and capture the live vision model's interpretation. Confirm that image identity and context are traceable.
 3. Perform a real two-way spoken exchange through Start voice. Show microphone input, remote audio output/transcripts, End cleanup, injected session failure and reconnection. Mark any prerecorded/synthetic audio used for automated provider tests separately from live microphone observations.
-4. Run/record the final clean checkout and CI checks against the submitted source snapshot; update this document and report with results.
+4. Repeat the clean checkout/CI checks if implementation changes; current source `3315741` has already passed them. Update the final report with successful live evidence when it exists.
 5. The student records one accessible **30–60-second** combined demonstration/process screencast showing the required AI modalities, checked simulated action/state and one design/verification decision. Detailed process belongs in the report/evidence log. No previous part's video is a substitute.
 
 ## Limits

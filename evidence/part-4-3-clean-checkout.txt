@@ -1,0 +1,259 @@
+Dependency installation succeeded; summarized in part-4-3-clean-checkout.json.
+
+> live-market-workstation@1.2.0 test
+> node scripts/run-python.mjs -m pytest -q && node --test scripts/test-voice.mjs
+
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 6.76s
+✔ WebRTC success receives transcripts; End releases microphone and transport (19.066042ms)
+✔ microphone denial reports failure before contacting provider (0.288708ms)
+✔ provider outage stops acquired microphone and permits reconnect (0.64325ms)
+✔ connection loss and injected failure are distinguishable (0.563583ms)
+✔ End during microphone prompt cleans up a late granted stream (0.250791ms)
+✔ audio setup timeout cannot revive a canceled session (52.913417ms)
+✔ a late autoplay rejection cannot revive an ended session (0.666875ms)
+✔ a failed provider response ends the live session and releases the microphone (0.378167ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 191.182917
+
+> live-market-workstation@1.2.0 build
+> vue-tsc --noEmit && vite build
+
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 2067 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.92 kB │ gzip:   0.55 kB
+dist/assets/index-Bbdvupva.css   31.27 kB │ gzip:   7.43 kB
+dist/assets/index-BEowExOU.js   318.06 kB │ gzip: 108.21 kB
+✓ built in 7m 31s
+
+> live-market-workstation@1.2.0 db:init
+> node scripts/run-python.mjs -m scripts.init_db
+
+SQLite initialized: <clean-checkout>/data/clean.sqlite
+{'observations': 0, 'revisions': 0, 'receipts': 0, 'duplicates': 0, 'superseded': 0, 'lastReceiptId': 0, 'candles': 0, 'journalMode': 'wal'}
+
+> live-market-workstation@1.2.0 recording:import
+> node scripts/run-python.mjs -m scripts.import_recording evidence/part-4-2-recording.json
+
+Imported 2917 recorded receipts from Yahoo Finance; historical data is never relabeled live.
+{'observations': 1767, 'revisions': 416, 'receipts': 2917, 'duplicates': 1150, 'superseded': 0, 'lastReceiptId': 2917, 'candles': 109, 'journalMode': 'wal'}
+{'integrity': 'ok'}
+
+> live-market-workstation@1.2.0 strategy:verify
+> node scripts/run-python.mjs -m scripts.verify_strategy
+
+{
+  "origin": "Genuine Yahoo observations recorded November 12, 2026; simulated execution",
+  "dataset": "evidence/part-4-2-recording.json",
+  "config": {
+    "symbol": "BTC-USD",
+    "mode": "backtest",
+    "fast": 9,
+    "slow": 21,
+    "initialCash": 10000,
+    "feeBps": 10,
+    "slippageBps": 5
+  },
+  "checks": {
+    "fillsAfterDecision": true,
+    "quoteSourceAfterCandleEnd": true,
+    "equityReconciles": true,
+    "marketRecordsUnchanged": true,
+    "restartPersists": true
+  },
+  "processedReceipts": 2917,
+  "summary": {
+    "cash": 496.34,
+    "quantity": "0.13095891",
+    "costBasis": 9430.35,
+    "realizedPnl": -73.31,
+    "unrealizedPnl": -17.31,
+    "equity": 9909.38,
+    "fees": 47.28,
+    "returnPercent": -0.9062,
+    "maxDrawdownPercent": 0.9112,
+    "completedBars": 108,
+    "signals": 5,
+    "fills": 5,
+    "markPrice": "71877.828125"
+  },
+  "orders": [
+    {
+      "id": 1,
+      "side": "buy",
+      "signalTime": 1794502320000,
+      "decisionTime": 1794502395872,
+      "signalReceiptId": 1191,
+      "signalObservationId": 726,
+      "status": "filled"
+    },
+    {
+      "id": 2,
+      "side": "sell",
+      "signalTime": 1794503100000,
+      "decisionTime": 1794503167611,
+      "signalReceiptId": 1551,
+      "signalObservationId": 943,
+      "status": "filled"
+    },
+    {
+      "id": 3,
+      "side": "buy",
+      "signalTime": 1794504120000,
+      "decisionTime": 1794504193119,
+      "signalReceiptId": 2016,
+      "signalObservationId": 1218,
+      "status": "filled"
+    },
+    {
+      "id": 4,
+      "side": "sell",
+      "signalTime": 1794505140000,
+      "decisionTime": 1794505203166,
+      "signalReceiptId": 2487,
+      "signalObservationId": 1506,
+      "status": "filled"
+    },
+    {
+      "id": 5,
+      "side": "buy",
+      "signalTime": 1794506040000,
+      "decisionTime": 1794506100591,
+      "signalReceiptId": 2906,
+      "signalObservationId": 1759,
+      "status": "filled"
+    }
+  ],
+  "fills": [
+    {
+      "orderId": 1,
+      "side": "buy",
+      "quantity": "0.13222908",
+      "price": 71773.23587109376,
+      "notional": 9490.51,
+      "fee": 9.49,
+      "realizedPnl": 0.0,
+      "quoteObservationId": 728,
+      "receiptId": 1193,
+      "sourceTime": 1794502397000,
+      "receivedAt": 1794502398859
+    },
+    {
+      "orderId": 2,
+      "side": "sell",
+      "quantity": "0.13222908",
+      "price": 71650.375640625,
+      "notional": 9474.26,
+      "fee": 9.47,
+      "realizedPnl": -35.21,
+      "quoteObservationId": 945,
+      "receiptId": 1553,
+      "sourceTime": 1794503167000,
+      "receivedAt": 1794503170589
+    },
+    {
+      "orderId": 3,
+      "side": "buy",
+      "quantity": "0.13165421",
+      "price": 71832.8203359375,
+      "notional": 9457.09,
+      "fee": 9.46,
+      "realizedPnl": 0.0,
+      "quoteObservationId": 1220,
+      "receiptId": 2018,
+      "sourceTime": 1794504191000,
+      "receivedAt": 1794504194367
+    },
+    {
+      "orderId": 4,
+      "side": "sell",
+      "quantity": "0.13165421",
+      "price": 71686.9354765625,
+      "notional": 9437.89,
+      "fee": 9.44,
+      "realizedPnl": -38.1,
+      "quoteObservationId": 1507,
+      "receiptId": 2488,
+      "sourceTime": 1794505204000,
+      "receivedAt": 1794505206851
+    },
+    {
+      "orderId": 5,
+      "side": "buy",
+      "quantity": "0.13095891",
+      "price": 71938.0916953125,
+      "notional": 9420.93,
+      "fee": 9.42,
+      "realizedPnl": 0.0,
+      "quoteObservationId": 1760,
+      "receiptId": 2907,
+      "sourceTime": 1794506101000,
+      "receivedAt": 1794506103773
+    }
+  ]
+}
+
+> live-market-workstation@1.2.0 ai:verify
+> node scripts/run-python.mjs -m scripts.verify_ai
+
+{
+  "evidence": "MOCKED AI + SYNTHETIC prices + fixed historical clock; NOT live-provider evidence",
+  "checks": {
+    "automaticBuyThenSell": true,
+    "fillsFollowDecision": true,
+    "cashReconciles": true,
+    "holdLeavesAccountUnchanged": true,
+    "invalidModelRejected": true,
+    "providerOutageStopsAction": true
+  },
+  "finalAccount": {
+    "cash": 8017.1,
+    "quantity": "0",
+    "costBasis": 0.0,
+    "realizedPnl": -1982.9,
+    "unrealizedPnl": 0.0,
+    "equity": 8017.1,
+    "fees": 17.01,
+    "returnPercent": -19.829,
+    "maxDrawdownPercent": 19.829,
+    "completedBars": 0,
+    "signals": 0,
+    "fills": 2,
+    "markPrice": "100"
+  }
+}
+INFO:     Started server process [8333]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:62858 (Press CTRL+C to quit)
+INFO:     127.0.0.1:62884 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62885 - "GET / HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8333]
+INFO:     Started server process [19739]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:65075 (Press CTRL+C to quit)
+INFO:     127.0.0.1:65086 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65087 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65090 - "GET /api/ai/status?symbol=BTC-USD HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65091 - "POST /api/ai/bots HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65092 - "POST /api/ai/decision HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65093 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [19739]

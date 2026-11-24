@@ -1,4 +1,4 @@
-# Part 4.1 evidence — Vue / FastAPI / SQLite
+# Workstation evidence — Parts 4.1–4.3
 
 ## Part 4.2
 
