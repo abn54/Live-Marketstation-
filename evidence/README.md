@@ -22,3 +22,11 @@
 - [Curated process log](../docs/evidence-log.md) · [AI/tool disclosure](../AI-USE.md)
 
 Screenshots were captured November 7, 2026. The November 9 browser rehearsal and independent live check are recorded separately and contain the genuine prices and counts observed in those runs. The [submission report](../report.md) links the student-recorded demonstration. The curated evidence distinguishes injected test data from genuine provider captures.
+
+# Part 4.3 evidence status
+
+- `part-4-3-mocked-verification.json`: explicitly mocked AI and synthetic prices in memory; automatic buy/sell, accounting, hold, invalid response and provider outage.
+- `part-4-3-live-provider.json`: real HTTP-429 exhausted-credit observation and actual browser request/audit records; **no successful live AI/vision/audio claim**.
+- `part-4-3-chart-input.png`: actual chart canvas input submitted to the vision endpoint; it does not prove a model interpreted it.
+- `part-4-3-dashboard.jpg` and `part-4-3-feed-check.jpg`: actual Vue UI controls and failed feed preflight; no mocked screenshot.
+- Test/build/clean-checkout logs are added when final checks complete. The Part 4.3 student recording is pending.

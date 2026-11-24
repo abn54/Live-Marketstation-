@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
 import {
   Activity,
+  Bot,
   ArrowDownLeft,
   ArrowUpRight,
   ChartCandlestick,
@@ -22,6 +23,7 @@ import {
 } from "@lucide/vue";
 import MarketChart from "./MarketChart.vue";
 import StrategyPanel from "./StrategyPanel.vue";
+import AIPanel from "./AIPanel.vue";
 import { calculateIndicators } from "./indicators";
 import type {
   Feed,
@@ -46,6 +48,11 @@ const blank = (symbol: string): SymbolData => ({
 });
 const data = shallowRef<Record<string, SymbolData>>({});
 const selected = ref("BTC-USD");
+const marketChart = ref<InstanceType<typeof MarketChart> | null>(null);
+function captureChart() {
+  if (!marketChart.value) throw new Error("The chart is not ready yet.");
+  return marketChart.value.captureImage();
+}
 const fast = ref(9),
   slow = ref(21),
   strategyPanel = ref<HTMLElement | null>(null);
@@ -388,6 +395,9 @@ function goLive() {
 function showChart() {
   chartPanel.value?.scrollIntoView({ block: "start" });
 }
+function showAI() {
+  document.getElementById("ai-workstation")?.scrollIntoView({ block: "start" });
+}
 function showEvidence(view: typeof tab.value) {
   tab.value = view;
   evidencePanel.value?.scrollIntoView({ block: "start" });
@@ -446,6 +456,14 @@ function toggleReplay() {
         <Database :size="21" />
       </button>
       <div class="rail-bottom">
+        <button
+          class="rail-button"
+          aria-label="AI workstation"
+          title="AI workstation"
+          @click="showAI"
+        >
+          <Bot :size="21" />
+        </button>
         <button
           class="rail-button"
           aria-label="Strategy laboratory"
@@ -646,6 +664,7 @@ function toggleReplay() {
             </div>
             <div class="chart-wrap">
               <MarketChart
+                ref="marketChart"
                 :candles="shown.candles"
                 :symbol="`${selected}:${mode}`"
                 :fit-key="fitKey"
@@ -861,12 +880,19 @@ function toggleReplay() {
                 Every update has a source.<br />Every revision leaves a record.
               </p>
               <div>
-                <Layers3 :size="14" />Part 4.2 · Indicators &amp; simulated
-                trading
+                <Layers3 :size="14" />Part 4.3 · AI-assisted simulated trading
               </div>
             </section>
           </aside>
         </div>
+        <AIPanel
+          id="ai-workstation"
+          :symbol="selected"
+          :fast="fast"
+          :slow="slow"
+          :replay="mode === 'replay'"
+          :capture-chart="captureChart"
+        />
         <div ref="strategyPanel" class="strategy-anchor">
           <StrategyPanel
             :symbol="selected"

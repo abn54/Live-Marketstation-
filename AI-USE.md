@@ -1,4 +1,4 @@
-# AI and tool disclosure — Assignment 4, Parts 4.1–4.2
+# AI and tool disclosure — Assignment 4, Parts 4.1–4.3
 
 ## Coding agent and model
 
@@ -8,23 +8,33 @@ The student's instructions supplied the Part 4.1 requirements, repository destin
 
 ## Tools and their roles
 
-| Tool | Actual use |
-| --- | --- |
-| Codex workspace editor, terminal, and Git | Created/edited files, installed pinned dependencies, ran Python/Node commands, inspected SQLite, built/tested the app, and published commits. No separate VS Code or other editor was used by the agent for this work. |
-| Codex browser automation | Exercised the actual localhost app, inspected visible status/ledger/replay/chart behavior, checked console logs, and captured screenshots for UI verification and the earlier generated demo. University authentication/restricted pages were not bypassed. |
-| Web lookup and primary documentation | Checked Vue, FastAPI WebSockets, Yahoo/yfinance transport/protocol, and TradingView chart usage. The assignment overview was ultimately supplied as pasted text by the user. |
-| pytest, FastAPI TestClient, httpx MockTransport, local WebSocket clients | Deterministic tests without external Yahoo traffic; injected values and failures are identified as test fixtures. |
-| yfinance pricing protobuf + websockets + httpx | Decoded actual Yahoo pricing messages and fetched real chart OHLCV. They are data/transport libraries, not AI models. |
-| Vue 3, Vite, vue-tsc, Lightweight Charts, Lucide Vue | Implemented/rendered/typechecked the frontend. Python FastAPI and sqlite3 implement the backend and storage. Node is used for frontend tooling, launchers, and an independent evidence client. |
-| Prettier and Black | Formatted generated TypeScript/Vue/JavaScript and Python for review. |
-| macOS `say` (Samantha voice) and FFmpeg | Previously generated a narrated demo from UI captures. The user chose to record their own video. The generated media and assembler were withdrawn. |
-| GitHub Actions | Configured repeatable Python tests and Vue build checks on pushes and pull requests. Local clean-checkout results and observed remote CI status are distinguished in verification notes. |
+| Tool                                                                     | Actual use                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex workspace editor, terminal, and Git                                | Created/edited source/docs, installed pinned dependencies, ran Python/Node commands, inspected SQLite, built/tested the app, and published commits. For Part 4.3, the agent also opened the entire project in VS Code at the student's request so the student could edit private configuration. Source implementation edits were made through workspace tools. |
+| Codex browser automation                                                 | Exercised the actual localhost app, inspected visible status/ledger/replay/chart behavior, checked console logs, and captured screenshots for UI verification and the earlier generated demo. University authentication/restricted pages were not bypassed.                                                                                                    |
+| Web lookup and primary documentation                                     | Checked Vue, FastAPI WebSockets, Yahoo/yfinance transport/protocol, and TradingView chart usage. The assignment overview was ultimately supplied as pasted text by the user.                                                                                                                                                                                   |
+| pytest, FastAPI TestClient, httpx MockTransport, local WebSocket clients | Deterministic tests without external Yahoo traffic; injected values and failures are identified as test fixtures.                                                                                                                                                                                                                                              |
+| yfinance pricing protobuf + websockets + httpx                           | Decoded actual Yahoo pricing messages and fetched real chart OHLCV. They are data/transport libraries, not AI models.                                                                                                                                                                                                                                          |
+| Vue 3, Vite, vue-tsc, Lightweight Charts, Lucide Vue                     | Implemented/rendered/typechecked the frontend. Python FastAPI and sqlite3 implement the backend and storage. Node is used for frontend tooling, launchers, and an independent evidence client.                                                                                                                                                                 |
+| Prettier, Black and Ruff format                                          | Formatted generated TypeScript/Vue/JavaScript and Python for review. Ruff format was used for the Part 4.3 Python additions.                                                                                                                                                                                                                                   |
+| macOS `say` (Samantha voice) and FFmpeg                                  | Previously generated a narrated demo from UI captures. The user chose to record their own video. The generated media and assembler were withdrawn.                                                                                                                                                                                                             |
+| GitHub Actions                                                           | Configured repeatable Python tests and Vue build checks on pushes and pull requests. Local clean-checkout results and observed remote CI status are distinguished in verification notes.                                                                                                                                                                       |
 
 ## Part 4.2 work on November 15
 
 Codex implemented the SMA overlays and crossover markers, receipt-driven paper account, persistent simulation snapshots, backtest controls, tests, offline evidence, and documentation. Defaults of 9/21 bars, $10,000 cash, 95% allocation, 10 bps fees and 5 bps slippage were implementation choices, with editable controls and explicit assumptions. The agent used pandas as an independent rolling-mean reference and Node to run the Vue calculator in the Python verification tests. It used FFmpeg to edit the student's recordings for Parts 4.1 and 4.2.
 
 The Sites skill supplied local development and browser-verification guidance. The implementation uses the existing Vue/FastAPI checkout. Codex used primary pandas and TradingView documentation for calculation and execution-timing references, Black and Prettier for touched source files, and the supported browser tool for verification. The first Vue build exposed a marker generic-type mismatch, which was corrected with the chart library's `Time` type. Browser testing exposed slow joins on the larger market history, leading to the `heads_observation` index. These changes and their verification are recorded in the evidence log. No subagents were used.
+
+## Part 4.3 work on November 23
+
+The student supplied the Part 4.3 assignment and instructed the agent to execute the necessary work. Codex generated the server-only OpenAI client, strict decision schema, snapshot/check pipeline, separate persistent AI simulated account, bounded opt-in automation, grounded chat, actual chart-PNG capture/input, WebRTC microphone/remote-audio lifecycle, automated tests, evidence tooling, docs and draft report. The existing SMA accounting engine was reused. No subagents were used.
+
+Official OpenAI documentation informed Responses structured outputs, image input, Realtime WebRTC SDP negotiation and audio/transcript events. The requested product models are `gpt-5.4-mini` for text/image and `gpt-realtime-2.1` for speech. These are application configuration choices, not the coding agent's model identity. Successful live access/model behavior is not inferred from documentation or from finding a key. The actual initial provider calls returned HTTP 429 `credit_balance_exhausted`; successful live decisions, vision and two-way speech remain pending until that external blocker is resolved.
+
+The OpenAI API-key skill required credential consent and local-destination confirmation. The secure local-save tool repeatedly returned not approved, so Codex did not create or write a key through it. Codex created an ignored, empty `.env.local` field at the student's request, opened the project in VS Code, and the student entered their own credential. Presence checks did not print it. The runtime keeps it on the server. The API troubleshooting skill distinguished exhausted credits from request-rate limiting. A read-only credit-offer preview reported no eligible offer; no account was linked and no credits were purchased.
+
+The Sites skill was used only for local frontend development/preview guidance. Browser observations established genuine Yahoo display, the actual image submitted, unavailable-provider messages with unchanged simulated cash, feed-outage preflight skip and recovery, and rendered voice controls. They did not establish successful live image interpretation or a two-way spoken exchange. Unit/Node tests and `ai:verify` use clearly marked injected providers, prices and browser APIs; no mock is a runtime fallback.
 
 ## Revised choices and why
 
@@ -36,7 +46,7 @@ The first Python test pass exposed WebSocket shutdown cancellation and a test th
 
 ## AI features in the submitted product
 
-Part 4.1 does not call an AI decision model, chatbot, vision model, or live-audio AI service. No OpenAI API key or other model-provider credentials are required or transmitted by this application. Those features belong to later parts and have not been implemented or claimed here. Market observations come from Yahoo Finance; replay comes from recorded SQLite observations, not model-generated prices.
+Parts 4.1 and 4.2 did not call AI models or require provider credentials. Part 4.3 adds the integrations described above and in [its design](docs/part-4-3-design.md), with verification status stated separately. Market observations continue to come from Yahoo Finance; replay comes from SQLite, and synthetic prices are confined to labeled tests. Chat, image interpretation and speech cannot submit orders. Only the checked server-side decision route can create simulated pending orders.
 
 Codex used the browser to rehearse the recording flow after the student reported trouble. Codex changed the Vue layout and chart view, added the SQLite replay checkpoint and FastAPI route, corrected per-connection quote freshness, and added regression coverage. The student supplies the spoken recording.
 
@@ -46,4 +56,4 @@ Codex used the browser to rehearse the recording flow after the student reported
 
 ## Student-recorded video preference
 
-The student recorded and narrated both demonstrations in Kaltura. Codex prepared private recording notes and used Kaltura transcripts and FFmpeg to select and trim scenes. The Part 4.1 clip lasts 58.92 seconds. The Part 4.2 clip lasts 59.12 seconds and uses five chronological excerpts, retaining the student's narration at its original speed. Browser chrome and the desktop dock were cropped, and audio gain and short cut-edge fades improved playback. The report links the Part 4.2 clip.
+The student recorded and narrated the Parts 4.1 and 4.2 demonstrations in Kaltura. Codex prepared private recording notes and used Kaltura transcripts and FFmpeg to select and trim scenes. The Part 4.1 clip lasts 58.92 seconds. The Part 4.2 clip lasts 59.12 seconds and retains original narration/speed. Those archived reports retain their video links. The Part 4.3 recording is pending; no previous video is represented as its demonstration, and no new narration/replacement video was generated for it.

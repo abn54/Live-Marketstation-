@@ -51,4 +51,25 @@ CREATE TABLE IF NOT EXISTS simulation_runs (
   state_json TEXT NOT NULL CHECK (json_valid(state_json))
 );
 CREATE UNIQUE INDEX IF NOT EXISTS simulation_one_running_symbol ON simulation_runs(symbol) WHERE status='running';
+CREATE TABLE IF NOT EXISTS ai_bots (
+  id TEXT PRIMARY KEY,
+  symbol TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL,
+  running INTEGER NOT NULL DEFAULT 0 CHECK (running IN (0,1)),
+  generation INTEGER NOT NULL DEFAULT 0,
+  config_json TEXT NOT NULL CHECK (json_valid(config_json)),
+  state_json TEXT NOT NULL CHECK (json_valid(state_json))
+);
+CREATE TABLE IF NOT EXISTS ai_activity (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  request_key TEXT UNIQUE,
+  bot_id TEXT REFERENCES ai_bots(id),
+  symbol TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('decision','chat','vision','audio')),
+  created_at INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  context_json TEXT NOT NULL CHECK (json_valid(context_json)),
+  response_json TEXT NOT NULL CHECK (json_valid(response_json))
+);
+CREATE INDEX IF NOT EXISTS ai_activity_symbol ON ai_activity(symbol,id DESC);
 PRAGMA user_version = 1;

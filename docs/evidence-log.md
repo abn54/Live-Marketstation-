@@ -1,6 +1,29 @@
-# Curated, redacted process evidence — Part 4.1
+# Curated, redacted process evidence — Parts 4.1–4.3
 
 These are selected decision records, not a complete chat export. Prompt excerpts are from the assignment text/user instructions. Source observations, injected tests, and UI captures have different evidentiary roles. The final report pins all current links to the submitted implementation/evidence commit. The previous framework implementation is retained only in history.
+
+## Part 4.3 · From model output to a checked simulated outcome
+
+- **Intent/prompt.** “Supply relevant market observations, indicators, and simulated-account context” and show checks “before the response can cause a simulated action.”
+- **Artifacts/decision.** [AI service](../server/ai.py), [provider client](../server/ai_provider.py), [panel](../client/AIPanel.vue), and additive schema. SMA regime permits one side; AI may confirm or hold. The server checks schema/identity/confidence/freshness/control generation/current candle/account eligibility, then commits audit and pending order together. Fills wait for a fresh quote after the checked decision watermark. A separate AI account preserves the earlier experiments.
+- **Verification.** [Injected tests](../tests/test_ai.py) and [explicitly mocked end-to-end result](../evidence/part-4-3-mocked-verification.json) exercise automatic buy/sell, accounting, veto/hold, invalid response, outdated context and unavailable provider. The fixtures use memory/temporary SQLite. The actual browser/source path showed fresh Yahoo quotes, an unavailable model call leaving $10,000 unchanged, and a feed outage causing a pre-model skip followed by recovery.
+- **Uncertainty.** Mock passes establish behavior under controlled inputs, not live model quality. Live successful decisions remain unverified while credits are exhausted. The regime filter differs from Part 4.2's crossover-event strategy and is disclosed explicitly.
+
+## Part 4.3 · Text, actual image input, and live-audio lifecycle
+
+- **Intent/prompt.** “Include a chatbot grounded in the workstation's data,” a vision model receiving chart imagery, and “two-way real-time speech through a live API.”
+- **Artifacts/decision.** The server builds fresh bounded context for chat/vision and a frozen context for voice. `MarketChart.captureImage` captures the real chart canvas as PNG, rather than asking a text-only model to imagine the chart. [Captured input](../evidence/part-4-3-chart-input.png) · [voice controller](../client/voice.ts). FastAPI authenticates Realtime SDP negotiation while microphone/remote audio uses real WebRTC. None of these explanation paths has trading tools.
+- **Verification.** Browser observations confirmed capture/preview, quota errors in chat/vision, and rendered audio controls. [Voice-controller tests](../scripts/test-voice.mjs) use browser API doubles to check actual controller cleanup, permission denial, timeout, provider failure/reconnect, transport loss and late permission after cancellation. A UI check exposed a misleading initial voice status after switching other tabs; the watcher now ends sessions only when leaving the voice tab.
+- **Failed checks/revision.** Two additional voice regression tests initially failed: a late autoplay rejection revived an ended UI state, and a provider `response.done` failure left it labeled live. The controller now guards the playback callback's generation and treats failed responses/closed event channels as terminal failures that release the microphone. Both regression tests then passed with the rest of the controller suite.
+- **Uncertainty.** A rendered control, mock session or negotiated SDP is insufficient evidence of a live spoken exchange. Successful image interpretation and microphone/remote-audio conversation remain required; the report must retain those pending states.
+
+## Part 4.3 · Failed secure setup and actual exhausted-credit response
+
+- **Intent.** Enable and demonstrate genuine provider calls without exposing credentials.
+- **Failed approach.** The secure local key-save confirmation repeatedly returned not approved. No key was created or written through that flow. The student then used an ignored local file; the agent only created a blank field and checked presence without printing its value.
+- **Actual service observation/revision.** Real Responses requests reached OpenAI but returned HTTP 429, type `insufficient_quota`, code `credit_balance_exhausted`. The initial generic 429 message did not distinguish this from a rate limit. The provider client now explicitly classifies exhausted credit and has a regression test; no fake successful decision replaces the provider failure.
+- **Verification/decision.** [Live failure and browser evidence](../evidence/part-4-3-live-provider.json) are separate from mocked successes. Automation disarms on a provider outage, and the visible account remained unchanged. The student was asked to fund the API project or use a funded key locally; no purchase or account link was made.
+- **Remaining uncertainty.** Adding funds is an external account action and was not claimed complete. Model access and successful multimodal behavior still need real observations after that change. The final 30–60-second student video is pending.
 
 ## Part 4.2 · Indicators, execution and accounting
 

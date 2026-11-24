@@ -34,6 +34,20 @@ let longSma: ISeriesApi<"Line"> | null = null;
 let markers: ISeriesMarkersPluginApi<Time> | null = null;
 let previous: Observation[] = [];
 let previousSymbol = "";
+function captureImage() {
+  if (!chart || !previous.length)
+    throw new Error("Wait for the market chart to load before capturing it.");
+  const screenshot = chart.takeScreenshot();
+  const scale = Math.min(1, 1536 / screenshot.width, 1000 / screenshot.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(screenshot.width * scale);
+  canvas.height = Math.round(screenshot.height * scale);
+  canvas
+    .getContext("2d")!
+    .drawImage(screenshot, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/png");
+}
+defineExpose({ captureImage });
 function showRecent() {
   if (!chart || !previous.length) return;
   const end = previous.length - 1;

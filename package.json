@@ -1,6 +1,6 @@
 {
   "name": "live-market-workstation",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,9 +11,11 @@
     "build": "vue-tsc --noEmit && vite build",
     "start": "node scripts/run-python.mjs -m server.main",
     "db:init": "node scripts/run-python.mjs -m scripts.init_db",
-    "test": "node scripts/run-python.mjs -m pytest -q",
+    "test": "node scripts/run-python.mjs -m pytest -q && node --test scripts/test-voice.mjs",
     "evidence": "node scripts/capture-evidence.js",
     "strategy:verify": "node scripts/run-python.mjs -m scripts.verify_strategy",
+    "ai:verify": "node scripts/run-python.mjs -m scripts.verify_ai",
+    "ai:evidence": "node scripts/run-python.mjs -m scripts.capture_ai_evidence",
     "recording:import": "node scripts/run-python.mjs -m scripts.import_recording"
   },
   "dependencies": {

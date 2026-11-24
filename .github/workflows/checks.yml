@@ -29,3 +29,5 @@ jobs:
           npm run recording:import
       - name: Recorded SMA strategy and accounting verification
         run: npm run strategy:verify
+      - name: Mocked AI bot verification (no provider or credentials)
+        run: npm run ai:verify

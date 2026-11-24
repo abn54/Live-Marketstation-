@@ -1,0 +1,23 @@
+
+> live-market-workstation@1.2.0 test
+> node scripts/run-python.mjs -m pytest -q && node --test scripts/test-voice.mjs
+
+........................................................................ [ 94%]
+....                                                                     [100%]
+76 passed in 1.91s
+✔ WebRTC success receives transcripts; End releases microphone and transport (18.597917ms)
+✔ microphone denial reports failure before contacting provider (0.318208ms)
+✔ provider outage stops acquired microphone and permits reconnect (1.116583ms)
+✔ connection loss and injected failure are distinguishable (0.589375ms)
+✔ End during microphone prompt cleans up a late granted stream (0.2635ms)
+✔ audio setup timeout cannot revive a canceled session (51.822917ms)
+✔ a late autoplay rejection cannot revive an ended session (0.560208ms)
+✔ a failed provider response ends the live session and releases the microphone (0.356125ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 188.214584
