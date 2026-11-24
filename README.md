@@ -2,7 +2,7 @@
 
 IST 402 — Assignment 4 through Part 4.3. A **Vue 3 frontend, FastAPI backend, and SQLite database on localhost**, with live Yahoo data, candlesticks/volume, SMA crossovers, persistent simulated accounts, backtesting, and checked AI decisions, grounded chat, chart vision and live audio.
 
-**Part 4.3 verification status:** Gemini free-tier structured decisions, grounded chat, actual chart interpretation and a two-way provider audio exchange have been observed. Automated checks are separate from live observations. The student's 30–60-second combined demonstration/process recording is still pending; see [verification notes](docs/part-4-3-verification.md).
+**Part 4.3 verification status:** Gemini free-tier structured decisions, an automatic simulated buy/fill on a later Yahoo quote, grounded chat, actual chart interpretation and two-way provider audio have been observed. Automated checks are separate from live observations. The student's 30–60-second combined demonstration/process recording is still pending; see [verification notes](docs/part-4-3-verification.md).
 
 [Submission report](report.md) · [Design/schema](docs/design.md) · [Verification](docs/verification.md) · [AI/tool disclosure](AI-USE.md) · [Curated process evidence](docs/evidence-log.md)
 

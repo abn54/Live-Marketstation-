@@ -1,27 +1,50 @@
-Dependency installation succeeded; summarized in part-4-3-clean-checkout.json.
+git clone --quiet --no-local <workspace> <clean-checkout>
+
+git checkout --quiet 1171d9d9027cd8ec9833639161432c42ae1c40b7
+
+/Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12 -m venv .venv
+
+<clean-checkout>/.venv/bin/python -m pip install --quiet -r requirements.txt
+
+[notice] A new release of pip is available: 24.2 -> 26.3
+[notice] To update, run: /private<clean-checkout>/.venv/bin/python -m pip install --upgrade pip
+
+npm ci --no-fund --no-audit
+
+added 56 packages in 2s
+npm warn install-scripts 2 packages have install scripts not yet covered by allowScripts:
+npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
+npm warn install-scripts   fsevents@2.3.3 (install: (install scripts present))
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+
+npm test
 
 > live-market-workstation@1.2.0 test
 > node scripts/run-python.mjs -m pytest -q && node --test scripts/test-voice.mjs
 
-........................................................................ [ 94%]
-....                                                                     [100%]
-76 passed in 6.76s
-✔ WebRTC success receives transcripts; End releases microphone and transport (19.066042ms)
-✔ microphone denial reports failure before contacting provider (0.288708ms)
-✔ provider outage stops acquired microphone and permits reconnect (0.64325ms)
-✔ connection loss and injected failure are distinguishable (0.563583ms)
-✔ End during microphone prompt cleans up a late granted stream (0.250791ms)
-✔ audio setup timeout cannot revive a canceled session (52.913417ms)
-✔ a late autoplay rejection cannot revive an ended session (0.666875ms)
-✔ a failed provider response ends the live session and releases the microphone (0.378167ms)
-ℹ tests 8
+........................................................................ [ 86%]
+...........                                                              [100%]
+83 passed in 6.37s
+✔ Live socket setup receives transcripts; End releases microphone, playback and transport (2.703917ms)
+✔ microphone denial reports failure before contacting provider (0.278458ms)
+✔ provider outage stops microphone and permits reconnect (0.355ms)
+✔ connection loss and injected failure are distinguishable (0.400042ms)
+✔ End during permission prompt cleans up a late granted stream (0.264875ms)
+✔ setup timeout cannot revive a canceled session (51.635125ms)
+✔ late autoplay rejection cannot revive an ended session (0.443667ms)
+✔ slow audio upload fails safely and stops the microphone (0.315625ms)
+✔ PCM resampling preserves duration, silence, clipping and speech-band frequency (3.097375ms)
+ℹ tests 9
 ℹ suites 0
-ℹ pass 8
+ℹ pass 9
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 191.182917
+ℹ duration_ms 193.2295
+
+npm run build
 
 > live-market-workstation@1.2.0 build
 > vue-tsc --noEmit && vite build
@@ -32,22 +55,11 @@ transforming...
 rendering chunks...
 computing gzip size...
 dist/index.html                   0.92 kB │ gzip:   0.55 kB
-dist/assets/index-Bbdvupva.css   31.27 kB │ gzip:   7.43 kB
-dist/assets/index-BEowExOU.js   318.06 kB │ gzip: 108.21 kB
-✓ built in 7m 31s
+dist/assets/index-CT7wAK_a.css   31.27 kB │ gzip:   7.43 kB
+dist/assets/index-BlGXkqOJ.js   321.35 kB │ gzip: 109.85 kB
+✓ built in 1.47s
 
-> live-market-workstation@1.2.0 db:init
-> node scripts/run-python.mjs -m scripts.init_db
-
-SQLite initialized: <clean-checkout>/data/clean.sqlite
-{'observations': 0, 'revisions': 0, 'receipts': 0, 'duplicates': 0, 'superseded': 0, 'lastReceiptId': 0, 'candles': 0, 'journalMode': 'wal'}
-
-> live-market-workstation@1.2.0 recording:import
-> node scripts/run-python.mjs -m scripts.import_recording evidence/part-4-2-recording.json
-
-Imported 2917 recorded receipts from Yahoo Finance; historical data is never relabeled live.
-{'observations': 1767, 'revisions': 416, 'receipts': 2917, 'duplicates': 1150, 'superseded': 0, 'lastReceiptId': 2917, 'candles': 109, 'journalMode': 'wal'}
-{'integrity': 'ok'}
+npm run strategy:verify
 
 > live-market-workstation@1.2.0 strategy:verify
 > node scripts/run-python.mjs -m scripts.verify_strategy
@@ -203,6 +215,8 @@ Imported 2917 recorded receipts from Yahoo Finance; historical data is never rel
   ]
 }
 
+npm run ai:verify
+
 > live-market-workstation@1.2.0 ai:verify
 > node scripts/run-python.mjs -m scripts.verify_ai
 
@@ -232,28 +246,20 @@ Imported 2917 recorded receipts from Yahoo Finance; historical data is never rel
     "markPrice": "100"
   }
 }
-INFO:     Started server process [8333]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:62858 (Press CTRL+C to quit)
-INFO:     127.0.0.1:62884 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:62885 - "GET / HTTP/1.1" 200 OK
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [8333]
-INFO:     Started server process [19739]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:65075 (Press CTRL+C to quit)
-INFO:     127.0.0.1:65086 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65087 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65090 - "GET /api/ai/status?symbol=BTC-USD HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65091 - "POST /api/ai/bots HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65092 - "POST /api/ai/decision HTTP/1.1" 200 OK
-INFO:     127.0.0.1:65093 - "WebSocket /ws" [accepted]
-INFO:     connection open
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [19739]
+
+npm run db:init
+
+> live-market-workstation@1.2.0 db:init
+> node scripts/run-python.mjs -m scripts.init_db
+
+SQLite initialized: <clean-checkout>/data/clean.sqlite
+{'observations': 0, 'revisions': 0, 'receipts': 0, 'duplicates': 0, 'superseded': 0, 'lastReceiptId': 0, 'candles': 0, 'journalMode': 'wal'}
+
+npm run recording:import -- evidence/part-4-2-recording.json
+
+> live-market-workstation@1.2.0 recording:import
+> node scripts/run-python.mjs -m scripts.import_recording evidence/part-4-2-recording.json
+
+Imported 2917 recorded receipts from Yahoo Finance; historical data is never relabeled live.
+{'observations': 1767, 'revisions': 416, 'receipts': 2917, 'duplicates': 1150, 'superseded': 0, 'lastReceiptId': 2917, 'candles': 109, 'journalMode': 'wal'}
+{'integrity': 'ok'}
