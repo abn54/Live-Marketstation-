@@ -18,14 +18,15 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .store import MAX_SAFE_INTEGER, MarketStore
 from .simulation import Simulations
 from .ai import AIAssistant
-from .ai_provider import OpenAIProvider, ProviderError
+from .ai_provider import GeminiProvider, ProviderError
+from .voice import voice_session
 from .yahoo import SYMBOLS, YahooFeed, now_ms
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -139,6 +140,7 @@ def create_app(
         os.getenv("APP_ENV") == "production" if serve_client is None else serve_client
     )
     queues = set()
+    voice_lock = asyncio.Lock()
     owned_store = store is None
 
     async def publish(message):
@@ -193,7 +195,7 @@ def create_app(
         app.state.feed = feed_factory(
             store=app.state.store, poll_ms=poll_ms, on_data=on_data, on_status=on_status
         )
-        app.state.ai_provider = ai_provider or OpenAIProvider()
+        app.state.ai_provider = ai_provider or GeminiProvider()
         app.state.assistant = AIAssistant(
             app.state.store, app.state.ai_provider, app.state.feed.status
         )
@@ -328,28 +330,18 @@ def create_app(
             body.symbol, body.message, image=body.image
         )
 
-    @app.post("/api/ai/realtime")
-    async def ai_audio(request: Request, symbol: str):
-        protect_ai(request)
-        valid_symbol(symbol)
-        if request.headers.get("content-type", "").split(";")[0] != "application/sdp":
-            raise HTTPException(415, "Audio setup requires application/sdp")
-        payload = bytearray()
-        async for chunk in request.stream():
-            payload.extend(chunk)
-            if len(payload) > 64_000:
-                raise HTTPException(413, "Audio session offer is too large")
-        try:
-            sdp = payload.decode("utf-8")
-        except UnicodeError:
-            raise HTTPException(400, "Invalid audio session offer")
-        if not sdp.startswith("v=0") or "m=audio" not in sdp:
-            raise HTTPException(400, "Invalid audio session offer")
-        answer, session_id = await app.state.assistant.audio(symbol, sdp)
-        return Response(
-            answer,
-            media_type="application/sdp",
-            headers={"X-Audio-Session": str(session_id)},
+    @app.websocket("/ws/ai/voice")
+    async def ai_audio(websocket: WebSocket, symbol: str):
+        if not same_origin(websocket.headers) or symbol not in SYMBOLS:
+            await websocket.close(code=1008)
+            return
+        await voice_session(
+            websocket,
+            app.state.assistant,
+            app.state.ai_provider,
+            symbol,
+            voice_lock,
+            demo_controls,
         )
 
     @app.post("/api/ai/audio-events")

@@ -60,6 +60,7 @@ type Activity = {
 type State = {
   configured: boolean;
   model: string;
+  visionModel?: string;
   audioModel: string;
   serviceStatus?: string;
   serviceError?: string;
@@ -86,6 +87,7 @@ const props = defineProps<{
 }>();
 const state = ref<State | null>(null),
   error = ref(""),
+  connectionError = ref(""),
   busy = ref(false),
   interactionBusy = ref(false);
 const activeTab = ref<"chat" | "vision" | "voice">("chat"),
@@ -132,7 +134,9 @@ async function api<T>(url: string, body?: unknown): Promise<T> {
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: AbortSignal.timeout(40000),
   });
-  const result = await response.json();
+  const result = await response.json().catch(() => {
+    throw new Error("Server connection interrupted. Reconnect and try again.");
+  });
   if (!response.ok)
     throw new Error(
       typeof result.error === "string"
@@ -150,11 +154,14 @@ async function refresh() {
     const result = await api<State>(
       `/api/ai/status?symbol=${encodeURIComponent(requested)}`,
     );
-    if (!disposed && version === generation && requested === props.symbol)
+    if (!disposed && version === generation && requested === props.symbol) {
       state.value = result;
+      connectionError.value = "";
+    }
   } catch (e) {
     if (!disposed && version === generation)
-      error.value = e instanceof Error ? e.message : "Server unavailable";
+      connectionError.value =
+        e instanceof Error ? e.message : "Server unavailable";
   }
 }
 async function ensureBot() {
@@ -314,13 +321,16 @@ onUnmounted(() => {
             : "Live AI needs an API key"
       }}</span>
     </header>
-    <p v-if="error" class="ai-error" role="alert">{{ error }}</p>
+    <p v-if="error || connectionError" class="ai-error" role="alert">
+      {{ error || connectionError }}
+    </p>
     <p v-if="state?.serviceError" class="ai-error" role="status">
       {{ state.serviceError }}
     </p>
     <div v-if="state && !state.configured" class="ai-notice">
-      Live AI is unavailable until the server’s private OpenAI key is
-      configured. Existing market data, replay and SMA simulations still work.
+      Live AI is unavailable until the server’s private Gemini key for a
+      confirmed Free tier project is configured. Existing market data, replay
+      and SMA simulations still work.
     </div>
     <div class="ai-layout">
       <div class="ai-bot">
@@ -582,9 +592,10 @@ onUnmounted(() => {
         <div v-show="activeTab === 'vision'" class="ai-interaction">
           <h3>Read the actual chart image</h3>
           <p class="ai-caption">
-            Sends a PNG captured from the visible candlestick/SMA chart to the
-            vision-language model, alongside the server’s current data snapshot.
-            The image and exact values can differ slightly in time; visual
+            Sends a PNG captured from the visible candlestick/SMA chart to
+            {{ state?.visionModel ?? "Gemini Live" }}, alongside the server’s
+            current data snapshot. Its spoken interpretation appears below as
+            text. The image and exact values can differ slightly in time; visual
             interpretation cannot execute trades.
           </p>
           <button
@@ -616,10 +627,9 @@ onUnmounted(() => {
         <div v-show="activeTab === 'voice'" class="ai-interaction">
           <h3>A live, two-way conversation</h3>
           <p class="ai-caption">
-            {{ state?.audioModel ?? "OpenAI Realtime" }} receives your
-            microphone audio and a frozen workstation snapshot. It replies with
-            streamed audio, not browser text-to-speech. Voice has no trading
-            tools.
+            {{ state?.audioModel ?? "Gemini Live" }} receives your microphone
+            audio and a frozen workstation snapshot. It replies with streamed
+            audio, not browser text-to-speech. Voice has no trading tools.
           </p>
           <div :class="['ai-voice-state', voiceState]">
             <Mic v-if="voiceState === 'live'" :size="24" /><MicOff

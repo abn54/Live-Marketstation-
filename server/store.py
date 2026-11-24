@@ -98,6 +98,19 @@ class MarketStore:
             "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; PRAGMA synchronous=FULL;"
         )
         self.db.executescript(Path(__file__).with_name("schema.sql").read_text())
+        # Both logs are append-only. Rebuild totals once after opening, then
+        # aggregate only new IDs; full history scans on every streaming quote
+        # otherwise starve HTTP/WS on a long-running workstation.
+        self._totals = dict(
+            observations=0,
+            revisions=0,
+            receipts=0,
+            duplicates=0,
+            superseded=0,
+            lastReceiptId=0,
+            candles=0,
+        )
+        self._counted_observation = 0
 
     def ingest_batch(self, observations):
         for o in observations:
@@ -213,7 +226,7 @@ class MarketStore:
     def recent(self, symbol, limit=12):
         with self.lock:
             rows = self.db.execute(
-                "SELECT r.id AS receipt_id,r.disposition,r.received_at AS receipt_time,o.* FROM receipts r JOIN observations o ON o.id=r.observation_id WHERE o.symbol=? ORDER BY r.id DESC LIMIT ?",
+                "SELECT r.id AS receipt_id,r.disposition,r.received_at AS receipt_time,o.* FROM receipts r CROSS JOIN observations o ON o.id=r.observation_id WHERE o.symbol=? ORDER BY r.id DESC LIMIT ?",
                 (symbol, limit),
             ).fetchall()
             return [
@@ -229,7 +242,7 @@ class MarketStore:
     def replay(self, symbol, *, after=0, until=MAX_SAFE_INTEGER, limit=500):
         with self.lock:
             rows = self.db.execute(
-                "SELECT r.id AS receipt_id,r.received_at AS receipt_time,r.disposition,r.applied,r.ordering_time AS receipt_ordering_time,o.* FROM receipts r JOIN observations o ON o.id=r.observation_id WHERE o.symbol=? AND r.id>? AND r.id<=? ORDER BY r.id LIMIT ?",
+                "SELECT r.id AS receipt_id,r.received_at AS receipt_time,r.disposition,r.applied,r.ordering_time AS receipt_ordering_time,o.* FROM receipts r CROSS JOIN observations o ON o.id=r.observation_id WHERE o.symbol=? AND r.id>? AND r.id<=? ORDER BY r.id LIMIT ?",
                 (symbol, after, until, limit),
             ).fetchall()
             return [replay_record(row) for row in rows]
@@ -242,7 +255,7 @@ class MarketStore:
             rows = self.db.execute(
                 """SELECT r.id AS receipt_id, r.received_at AS receipt_time,
                           r.ordering_time AS receipt_ordering_time, r.disposition, r.applied, o.*
-                   FROM receipts r JOIN observations o ON o.id=r.observation_id
+                   FROM receipts r CROSS JOIN observations o ON o.id=r.observation_id
                    WHERE o.symbol=? AND r.id<=? ORDER BY r.id DESC LIMIT ?""",
                 (symbol, until, limit),
             ).fetchall()
@@ -279,18 +292,21 @@ class MarketStore:
     def stats(self):
         with self.lock:
             observations = self.db.execute(
-                "SELECT COUNT(*) AS observations,COALESCE(SUM(revision>1),0) AS revisions FROM observations"
+                "SELECT COUNT(*) AS observations,COALESCE(SUM(revision>1),0) AS revisions,COALESCE(SUM(kind='candle' AND revision=1),0) AS candles,COALESCE(MAX(id),?) AS last_id FROM observations WHERE id>?",
+                (self._counted_observation, self._counted_observation),
             ).fetchone()
             receipts = self.db.execute(
-                "SELECT COUNT(*) AS receipts,COALESCE(SUM(disposition='duplicate'),0) AS duplicates,COALESCE(SUM(disposition='superseded'),0) AS superseded,COALESCE(MAX(id),0) AS lastReceiptId FROM receipts"
+                "SELECT COUNT(*) AS receipts,COALESCE(SUM(disposition='duplicate'),0) AS duplicates,COALESCE(SUM(disposition='superseded'),0) AS superseded,COALESCE(MAX(id),?) AS lastReceiptId FROM receipts WHERE id>?",
+                (self._totals["lastReceiptId"], self._totals["lastReceiptId"]),
             ).fetchone()
-            candles = self.db.execute(
-                "SELECT COUNT(*) FROM heads h JOIN observations o ON o.id=h.observation_id WHERE kind='candle'"
-            ).fetchone()[0]
+            for key in ("observations", "revisions", "candles"):
+                self._totals[key] += observations[key]
+            for key in ("receipts", "duplicates", "superseded"):
+                self._totals[key] += receipts[key]
+            self._totals["lastReceiptId"] = receipts["lastReceiptId"]
+            self._counted_observation = observations["last_id"]
             return dict(
-                **dict(observations),
-                **dict(receipts),
-                candles=candles,
+                **self._totals,
                 journalMode=self.db.execute("PRAGMA journal_mode").fetchone()[0],
             )
 

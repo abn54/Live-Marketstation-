@@ -1,26 +1,29 @@
-"""Bounded, server-only OpenAI Responses and Realtime clients.
-
-Transport injection is for tests, never a production fallback or price source.
-"""
+"""Server-only Gemini text/image and live audio transport, restricted to free-tier models."""
 
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 import json
 import os
-import ssl
 from pathlib import Path
+import ssl
+from typing import Literal
 
 import certifi
 from dotenv import dotenv_values
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Literal
+from websockets.asyncio.client import connect
+from websockets.exceptions import WebSocketException
 
 ROOT = Path(__file__).resolve().parent.parent
+TEXT_MODELS = {"gemini-3.5-flash-lite"}
+AUDIO_MODELS = {"gemini-3.8-live", "gemini-3.1-flash-live-preview"}
+LIVE_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
 
 
 def setting(name, default=""):
-    # Read on demand: saving the private key does not require restarting Vite.
     return (
         os.getenv(name)
         or dotenv_values(ROOT / ".env.local").get(name)
@@ -30,7 +33,7 @@ def setting(name, default=""):
 
 
 class ProviderError(Exception):
-    """Public errors contain neither headers nor upstream response bodies."""
+    """Controlled errors never contain credentials or upstream response bodies."""
 
     def __init__(self, message, *, status=None, code=None):
         super().__init__(message)
@@ -56,199 +59,304 @@ GROUNDING = (
 )
 
 
-class OpenAIProvider:
-    def __init__(self, client=None):
+class GeminiProvider:
+    def __init__(self, client=None, voice_connector=None):
         self.client = client or httpx.AsyncClient(
             timeout=httpx.Timeout(30, connect=10),
             verify=ssl.create_default_context(cafile=certifi.where()),
         )
         self.owned = client is None
+        self.voice_connector = voice_connector or connect
         self.last_error = None
         self.service_status = "not checked"
 
     @property
     def model(self):
-        return setting("OPENAI_MODEL", "gpt-5.4-mini")
+        return setting("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
     @property
     def audio_model(self):
-        return setting("OPENAI_REALTIME_MODEL", "gpt-realtime-2.1")
+        return setting("GEMINI_LIVE_MODEL", "gemini-3.8-live")
+
+    @property
+    def key(self):
+        return setting("GEMINI_API_KEY") or setting("GOOGLE_API_KEY")
 
     @property
     def configured(self):
-        key = setting("OPENAI_API_KEY").strip()
-        return key.startswith("sk-") and len(key) > 20 and "your-key" not in key
+        return (
+            len(self.key.strip()) > 20
+            and "your-" not in self.key.lower()
+            and setting("GEMINI_FREE_TIER_CONFIRMED").lower() == "true"
+        )
 
     def status(self):
         return dict(
-            provider="OpenAI",
+            provider="Google Gemini",
             configured=self.configured,
             model=self.model,
+            visionModel=self.audio_model,
             audioModel=self.audio_model,
             serviceStatus=self.service_status,
             serviceError=self.last_error,
+            freeTierOnly=True,
+            freeTierConfirmed=setting("GEMINI_FREE_TIER_CONFIRMED").lower() == "true",
         )
 
     def failure(self, message, **metadata):
         self.last_error, self.service_status = message, "unavailable"
         return ProviderError(message, **metadata)
 
+    def require_configuration(self, *, audio=False):
+        if not self.configured:
+            raise self.failure(
+                "Gemini is not configured. Save the private GEMINI_API_KEY and confirm its project is Free tier with billing disabled."
+            )
+        if (self.audio_model if audio else self.model) not in (
+            AUDIO_MODELS if audio else TEXT_MODELS
+        ):
+            raise self.failure(
+                "This free-tier-only build does not allow the configured model. No paid-provider fallback is enabled."
+            )
+
     async def close(self):
         if self.owned:
             await self.client.aclose()
 
-    async def _post(self, path, **kwargs):
-        if not self.configured:
-            raise self.failure(
-                "OpenAI is not configured. Save OPENAI_API_KEY in the private .env.local file."
-            )
-        try:
-            response = await self.client.post(
-                "https://api.openai.com/v1/" + path,
-                headers={"Authorization": "Bearer " + setting("OPENAI_API_KEY")},
-                **kwargs,
-            )
-        except httpx.TimeoutException:
-            raise self.failure(
-                "OpenAI timed out. No model action was applied."
-            ) from None
-        except httpx.HTTPError:
-            raise self.failure(
-                "OpenAI is unreachable. No model action was applied."
-            ) from None
-        if response.is_error:
-            try:
-                error = response.json().get("error", {})
-                upstream_code = error.get("code") or error.get("type")
-            except (ValueError, AttributeError):
-                upstream_code = None
-            code = (
-                upstream_code
-                if isinstance(upstream_code, str)
-                and upstream_code
-                in {
-                    "insufficient_quota",
-                    "credit_balance_exhausted",
-                    "rate_limit_exceeded",
-                    "invalid_api_key",
-                    "model_not_found",
-                }
-                else None
-            )
-            detail = {
-                401: "Check the private API key",
-                403: "Check project/model access",
-                429: "Check API credits or rate limits",
-            }.get(response.status_code, "The provider is unavailable")
-            if code in {"insufficient_quota", "credit_balance_exhausted"}:
-                detail = "API credits are exhausted or a project spending limit has been reached"
-            elif code == "rate_limit_exceeded":
-                detail = "The API request rate limit was reached; wait before retrying"
-            raise self.failure(
-                f"OpenAI returned HTTP {response.status_code}. {detail}. No model action was applied.",
-                status=response.status_code,
-                code=code,
-            )
-        return response
-
     async def respond(
         self, context, message, *, decision=False, image=None, history=()
     ):
-        content = [{"type": "input_text", "text": message}]
-        if image:
-            content.append(
-                {"type": "input_image", "image_url": image, "detail": "high"}
-            )
+        if image and not decision:
+            return await self.describe_image(context, message, image)
+        self.require_configuration()
         instructions = GROUNDING
         if decision:
-            instructions += (
-                " Return the decision schema. Echo symbol and snapshotId exactly. "
-                "The SMA candidate is a risk filter: choose that candidate or hold; never the opposite action. "
-                "Use hold for weak evidence, stale data, or uncertainty. Confidence is a self-report, not a probability of profit."
+            instructions += " Return exactly the decision schema. Echo symbol and snapshotId. Choose the SMA candidate or hold; never the opposite action. Use hold for weak evidence or uncertainty. Confidence is a self-report, not a probability of profit."
+        parts = [{"text": message}]
+        if image:
+            if not image.startswith("data:image/png;base64,"):
+                raise ProviderError("Only a bounded PNG chart input is supported.")
+            parts.append(
+                {
+                    "inlineData": {
+                        "mimeType": "image/png",
+                        "data": image.split(",", 1)[1],
+                    }
+                }
             )
         body = dict(
-            model=self.model,
-            store=False,
-            max_output_tokens=1000,
-            instructions=instructions
-            + "\nWORKSTATION SNAPSHOT:\n"
-            + json.dumps(context, allow_nan=False),
-            input=[*history, {"role": "user", "content": content}],
+            systemInstruction={
+                "parts": [
+                    {
+                        "text": instructions
+                        + "\nWORKSTATION SNAPSHOT:\n"
+                        + json.dumps(context, allow_nan=False)
+                    }
+                ]
+            },
+            contents=[
+                *(
+                    {
+                        "role": "model" if turn["role"] == "assistant" else "user",
+                        "parts": [{"text": turn["content"]}],
+                    }
+                    for turn in history
+                ),
+                {"role": "user", "parts": parts},
+            ],
+            generationConfig={"maxOutputTokens": 1000, "temperature": 0.1},
         )
-        if self.model.startswith("gpt-5.4"):
-            body["reasoning"] = {"effort": "none"}
         if decision:
-            body["text"] = {
-                "format": {
-                    "type": "json_schema",
-                    "name": "workstation_decision",
-                    "strict": True,
-                    "schema": ModelDecision.model_json_schema(),
-                }
-            }
-        response = await self._post("responses", json=body)
+            body["generationConfig"].update(
+                responseMimeType="application/json",
+                responseJsonSchema=ModelDecision.model_json_schema(),
+            )
         try:
-            result = response.json()
-            if result.get("status") != "completed":
-                raise ProviderError(
-                    "OpenAI returned an incomplete response. No model action was applied."
+            for attempt in range(2):
+                response = await self.client.post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/"
+                    + self.model
+                    + ":generateContent",
+                    headers={"x-goog-api-key": self.key},
+                    json=body,
                 )
-            parts = [
-                part
-                for item in result.get("output", [])
-                if item.get("type") == "message"
-                for part in item.get("content", [])
-            ]
-            if any(part.get("type") == "refusal" for part in parts):
-                raise ProviderError(
-                    "The model declined the request. No model action was applied."
-                )
+                if response.status_code != 503 or attempt == 1:
+                    break
+                # One bounded retry for transient capacity, same free model.
+                # Quota/auth errors are never retried or routed to a paid model.
+                await asyncio.sleep(1)
+        except httpx.TimeoutException:
+            raise self.failure(
+                "Gemini timed out. No model action was applied."
+            ) from None
+        except httpx.HTTPError:
+            raise self.failure(
+                "Gemini is unreachable. No model action was applied."
+            ) from None
+        if response.is_error:
+            messages = {
+                400: "Check the Gemini key and supported request",
+                401: "Check the private Gemini key",
+                403: "Check free-tier eligibility and key restrictions; keep billing disabled",
+                404: "The selected free-tier model is unavailable",
+                429: "Gemini free-tier quota was reached; wait before retrying",
+            }
+            code = (
+                "RESOURCE_EXHAUSTED"
+                if response.status_code == 429
+                else "PROVIDER_ERROR"
+            )
+            raise self.failure(
+                f"Gemini returned HTTP {response.status_code}. {messages.get(response.status_code, 'The live service is unavailable')}. No paid fallback or model action was applied.",
+                status=response.status_code,
+                code=code,
+            )
+        try:
+            data = response.json()
+            candidates = data.get("candidates", [])
+            if not candidates or candidates[0].get("finishReason") != "STOP":
+                raise ValueError("Refused or incomplete generation")
             answer = "\n".join(
-                part["text"] for part in parts if part.get("type") == "output_text"
+                p["text"]
+                for p in candidates[0].get("content", {}).get("parts", [])
+                if isinstance(p.get("text"), str) and not p.get("thought")
             )
             if not answer.strip() or len(answer) > 16000:
-                raise ValueError("Missing or oversized output")
+                raise ValueError("Invalid response")
             self.last_error, self.service_status = None, "connected"
             return dict(
                 text=answer,
-                responseId=result["id"],
-                model=result["model"],
-                usage=result.get("usage", {}),
-                provider="OpenAI",
+                responseId=data.get("responseId"),
+                model=data.get("modelVersion") or self.model,
+                requestedModel=self.model,
+                usage=data.get("usageMetadata", {}),
+                attempts=attempt + 1,
+                provider="Google Gemini",
                 evidence="live-provider",
             )
-        except (ValueError, KeyError, TypeError):
-            raise ProviderError(
-                "OpenAI returned an invalid response envelope. No model action was applied."
+        except (ValueError, TypeError, KeyError, AttributeError):
+            raise self.failure(
+                "Gemini returned a refused, incomplete or invalid response. No model action was applied."
             ) from None
 
-    def realtime_session(self, context):
+    def live_setup(self, context):
         return dict(
-            type="realtime",
-            model=self.audio_model,
-            output_modalities=["audio"],
-            max_output_tokens=400,
-            instructions=GROUNDING
-            + " Speak English. Keep answers under four sentences. This session has a frozen snapshot; say when newer information is needed.\nSNAPSHOT:\n"
-            + json.dumps(context, allow_nan=False),
-            audio={
-                "input": {
-                    "transcription": {"model": "gpt-4o-mini-transcribe"},
-                    "turn_detection": {"type": "server_vad"},
+            setup=dict(
+                model="models/" + self.audio_model,
+                generationConfig=dict(
+                    responseModalities=["AUDIO"],
+                    maxOutputTokens=1000,
+                    speechConfig=dict(
+                        voiceConfig=dict(prebuiltVoiceConfig=dict(voiceName="Kore"))
+                    ),
+                ),
+                systemInstruction={
+                    "parts": [
+                        {
+                            "text": GROUNDING
+                            + " Attached chart imagery is also supplied workstation evidence. Speak English in at most three short sentences. The snapshot is frozen; reconnect for fresh context.\nSNAPSHOT:\n"
+                            + json.dumps(context, allow_nan=False)
+                        }
+                    ]
                 },
-                "output": {"voice": "marin"},
-            },
+                inputAudioTranscription={},
+                outputAudioTranscription={},
+            )
         )
 
-    async def realtime(self, sdp, context):
-        response = await self._post(
-            "realtime/calls",
-            files={
-                "sdp": (None, sdp),
-                "session": (None, json.dumps(self.realtime_session(context))),
-            },
+    async def describe_image(self, context, message, image):
+        # Gemini Live is multimodal. Send the image and question in the SAME
+        # clientContent turn, so the interpretation cannot race a video frame.
+        if not image.startswith("data:image/png;base64,"):
+            raise ProviderError("Only a bounded PNG chart input is supported.")
+        transcript = ""
+        try:
+            async with asyncio.timeout(45):
+                async with self.voice(context) as upstream:
+                    await upstream.send(
+                        json.dumps(
+                            dict(
+                                clientContent=dict(
+                                    turns=[
+                                        dict(
+                                            role="user",
+                                            parts=[
+                                                dict(
+                                                    inlineData=dict(
+                                                        mimeType="image/png",
+                                                        data=image.split(",", 1)[1],
+                                                    )
+                                                ),
+                                                dict(
+                                                    text=message
+                                                    + " Use the attached chart as evidence; distinguish image estimates from exact snapshot values. Answer in two brief sentences."
+                                                ),
+                                            ],
+                                        )
+                                    ],
+                                    turnComplete=True,
+                                )
+                            )
+                        )
+                    )
+                    async for raw in upstream:
+                        event = json.loads(raw)
+                        if "error" in event or "goAway" in event:
+                            raise self.failure(
+                                "Gemini Live could not interpret the image. No action was applied."
+                            )
+                        content = event.get("serverContent", {})
+                        transcript += content.get("outputTranscription", {}).get(
+                            "text", ""
+                        )
+                        if len(transcript) > 16000:
+                            raise self.failure(
+                                "Gemini Live image response exceeded the limit."
+                            )
+                        if content.get("turnComplete"):
+                            if not transcript.strip():
+                                break
+                            return dict(
+                                text=transcript,
+                                model=self.audio_model,
+                                requestedModel=self.audio_model,
+                                modelIdentity="Requested model acknowledged by Live setup; no version ID returned",
+                                responseId=None,
+                                usage={},
+                                provider="Google Gemini",
+                                evidence="live-provider",
+                                transport="Gemini Live image input and output transcription",
+                            )
+        except TimeoutError:
+            raise self.failure(
+                "Gemini Live image interpretation timed out. No action was applied."
+            ) from None
+        raise self.failure(
+            "Gemini Live returned no completed image interpretation. No action was applied."
         )
-        if not response.text.startswith("v=0") or "m=audio" not in response.text:
-            raise ProviderError("OpenAI returned an invalid audio-session answer.")
-        self.last_error, self.service_status = None, "connected"
-        return response.text
+
+    @asynccontextmanager
+    async def voice(self, context):
+        self.require_configuration(audio=True)
+        try:
+            async with self.voice_connector(
+                LIVE_URL,
+                additional_headers={"x-goog-api-key": self.key},
+                ssl=ssl.create_default_context(cafile=certifi.where()),
+                open_timeout=15,
+                max_size=2_000_000,
+            ) as upstream:
+                await upstream.send(json.dumps(self.live_setup(context)))
+                first = json.loads(await asyncio.wait_for(upstream.recv(), 15))
+                if "setupComplete" not in first:
+                    raise self.failure(
+                        "Gemini Live rejected the audio setup. Check the free-tier model and quota; no paid fallback is enabled."
+                    )
+                self.last_error, self.service_status = None, "connected"
+                yield upstream
+        except ProviderError:
+            raise
+        except (WebSocketException, TimeoutError, OSError, ValueError):
+            raise self.failure(
+                "Gemini Live connection failed or closed. Reconnect after checking free-tier quota and network availability."
+            ) from None

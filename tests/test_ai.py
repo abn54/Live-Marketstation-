@@ -1,6 +1,7 @@
 """Injected-provider checks. These are NOT evidence of a live model/audio call."""
 
 import asyncio
+from contextlib import asynccontextmanager
 import base64
 import json
 import struct
@@ -10,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from server.ai import AIAssistant, image_metadata
-from server.ai_provider import ModelDecision, OpenAIProvider, ProviderError
+from server.ai_provider import ModelDecision, GeminiProvider, ProviderError
 from server.main import create_app
 from server.store import MarketStore
 from tests.test_app import FakeFeed
@@ -68,11 +69,47 @@ class MockProvider:
             provider="mock",
         )
 
-    async def realtime(self, sdp, context):
+    @asynccontextmanager
+    async def voice(self, context):
         if self.failure:
             raise ProviderError("Injected audio session outage")
-        self.calls.append((context, sdp, {}))
-        return "v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n"
+        self.calls.append((context, "voice", {}))
+
+        class MockSocket:
+            def __init__(self):
+                self.queue = asyncio.Queue()
+
+            async def send(self, raw):
+                message = json.loads(raw)
+                content = {
+                    "modelTurn": {
+                        "parts": [
+                            {
+                                "inlineData": {
+                                    "mimeType": "audio/pcm;rate=24000",
+                                    "data": base64.b64encode(bytes(480)).decode(),
+                                }
+                            }
+                        ]
+                    },
+                    "outputTranscription": {
+                        "text": "Mock simulated-account explanation."
+                    },
+                    "turnComplete": True,
+                }
+                if "realtimeInput" in message:
+                    content["inputTranscription"] = dict(
+                        text="Explain this simulated account."
+                    )
+                await self.queue.put(json.dumps(dict(serverContent=content)))
+
+            def __aiter__(self):
+                return self
+
+            async def __anext__(self):
+                return await self.queue.get()
+
+        yield MockSocket()
 
 
 def seed(store):
@@ -406,137 +443,130 @@ def test_http_validation_origin_and_audio_outage_are_distinct_from_live_evidence
         )
         assert (
             client.post(
-                "/api/ai/realtime?symbol=BTC-USD",
-                content="invalid",
-                headers={"Content-Type": "application/sdp"},
+                "/api/ai/realtime?symbol=BTC-USD", content="invalid"
             ).status_code
-            == 400
-        )
-        assert (
-            client.post(
-                "/api/ai/realtime?symbol=BTC-USD", content="v=0\r\nm=audio"
-            ).status_code
-            == 415
+            == 404
         )
         provider.failure = True
-        response = client.post(
-            "/api/ai/realtime?symbol=BTC-USD",
-            content="v=0\r\nm=audio",
-            headers={"Content-Type": "application/sdp"},
-        )
-        assert response.status_code == 503
+        with client.websocket_connect("/ws/ai/voice?symbol=BTC-USD") as socket:
+            error = socket.receive_json()
+            assert (
+                error["type"] == "error"
+                and "Injected audio session outage" in error["detail"]
+            )
         activity = client.get("/api/ai/status?symbol=BTC-USD").json()["activities"][0]
-        assert activity["kind"] == "audio" and activity["status"] == "unavailable"
+        assert activity["kind"] == "audio" and activity["status"] == "failure"
     store.close()
+
+
+def mock_settings(name, default=""):
+    return {
+        "GEMINI_API_KEY": "AIza-test-not-a-real-secret-value",
+        "GEMINI_MODEL": "gemini-3.5-flash-lite",
+        "GEMINI_FREE_TIER_CONFIRMED": "true",
+    }.get(name, default)
 
 
 @pytest.mark.parametrize("failure", [401, 429, 503, "timeout", "envelope", "refusal"])
 async def test_provider_failures_are_redacted(monkeypatch, failure):
-    monkeypatch.setattr(
-        "server.ai_provider.setting",
-        lambda key, default="": {
-            "OPENAI_API_KEY": "sk-test-private-value-not-to-be-exposed",
-            "OPENAI_MODEL": "gpt-5.4-mini",
-        }.get(key, default),
-    )
+    monkeypatch.setattr("server.ai_provider.setting", mock_settings)
 
     def transport(request):
         if failure == "timeout":
             raise httpx.ReadTimeout("sensitive transport details", request=request)
         if failure == "envelope":
-            return httpx.Response(200, json={"status": "completed", "output": []})
-        if failure == "refusal":
             return httpx.Response(
                 200,
                 json={
-                    "status": "completed",
-                    "output": [
-                        {
-                            "type": "message",
-                            "content": [{"type": "refusal", "refusal": "no"}],
-                        }
-                    ],
+                    "candidates": [{"finishReason": "STOP", "content": {"parts": []}}]
                 },
             )
+        if failure == "refusal":
+            return httpx.Response(200, json={"candidates": []})
         return httpx.Response(
             failure, text="Do not expose this provider body or credentials"
         )
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as client:
-        provider = OpenAIProvider(client)
         with pytest.raises(ProviderError) as caught:
-            await provider.respond({}, "test")
-        assert "private-value" not in str(caught.value)
+            await GeminiProvider(client).respond({}, "test")
+        assert "real-secret" not in str(caught.value)
         assert "sensitive" not in str(caught.value)
         assert "provider body" not in str(caught.value)
 
 
-async def test_provider_uses_strict_schema_image_input_and_keeps_key_server_side(
+async def test_provider_uses_strict_schema_and_keeps_key_server_side(
     monkeypatch,
 ):
-    monkeypatch.setattr(
-        "server.ai_provider.setting",
-        lambda key, default="": {
-            "OPENAI_API_KEY": "sk-test-not-a-real-secret-value",
-            "OPENAI_MODEL": "gpt-5.4-mini",
-        }.get(key, default),
-    )
+    monkeypatch.setattr("server.ai_provider.setting", mock_settings)
     requests = []
 
     def transport(request):
+        assert request.url.host == "generativelanguage.googleapis.com"
+        assert "key=" not in str(request.url)
         requests.append(json.loads(request.content))
         return httpx.Response(
             200,
             json=dict(
-                id="mock-id",
-                model="mock-model",
-                status="completed",
-                output=[
+                responseId="mock-id",
+                modelVersion="mock-model",
+                candidates=[
                     dict(
-                        type="message",
-                        content=[dict(type="output_text", text="A test response")],
+                        finishReason="STOP",
+                        content=dict(parts=[dict(text="A test response")]),
                     )
                 ],
             ),
         )
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as client:
-        provider = OpenAIProvider(client)
+        provider = GeminiProvider(client)
         result = await provider.respond({"simulated": True}, "Decide", decision=True)
-        await provider.respond(
-            {"simulated": True}, "Explain image", image="data:image/png;base64,TEST"
-        )
-    assert requests[0]["text"]["format"]["strict"]
-    assert not requests[0]["store"]
-    assert requests[1]["input"][-1]["content"][-1]["type"] == "input_image"
-    assert "sk-test" not in json.dumps(requests)
-    assert "sk-test" not in json.dumps(result)
-
-
-async def test_exhausted_credits_are_not_labeled_a_temporary_rate_limit(monkeypatch):
-    monkeypatch.setattr(
-        "server.ai_provider.setting",
-        lambda key, default="": (
-            "sk-test-not-a-real-secret-value" if key == "OPENAI_API_KEY" else default
-        ),
+    assert (
+        requests[0]["generationConfig"]["responseJsonSchema"]["additionalProperties"]
+        is False
     )
+    assert "real-secret" not in json.dumps(requests)
+    assert "real-secret" not in json.dumps(result)
+
+
+async def test_free_quota_failure_never_falls_back_to_a_paid_provider(monkeypatch):
+    monkeypatch.setattr("server.ai_provider.setting", mock_settings)
     async with httpx.AsyncClient(
         transport=httpx.MockTransport(
             lambda request: httpx.Response(
-                429,
-                json={
-                    "error": {
-                        "type": "insufficient_quota",
-                        "code": "credit_balance_exhausted",
-                    }
-                },
+                429, json={"error": {"status": "RESOURCE_EXHAUSTED"}}
             )
         )
     ) as client:
         with pytest.raises(ProviderError) as caught:
-            await OpenAIProvider(client).respond({}, "test")
-        assert caught.value.code == "credit_balance_exhausted"
-        assert "credits are exhausted" in str(caught.value)
+            await GeminiProvider(client).respond({}, "test")
+        assert caught.value.code == "RESOURCE_EXHAUSTED"
+        assert "No paid fallback" in str(caught.value)
+
+
+@pytest.mark.parametrize(
+    "setting_name,value",
+    [("GEMINI_MODEL", "gemini-4-carbon"), ("GEMINI_FREE_TIER_CONFIRMED", "false")],
+)
+async def test_paid_model_or_unconfirmed_project_never_makes_a_request(
+    monkeypatch, setting_name, value
+):
+    monkeypatch.setattr(
+        "server.ai_provider.setting",
+        lambda name, default="": (
+            value if name == setting_name else mock_settings(name, default)
+        ),
+    )
+    calls = []
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: calls.append(request) or httpx.Response(200, json={})
+        )
+    ) as client:
+        with pytest.raises(ProviderError):
+            await GeminiProvider(client).respond({}, "test")
+    assert not calls
 
 
 def test_additive_schema_preserves_market_and_saved_simulations(tmp_path):
@@ -572,3 +602,147 @@ def test_additive_schema_preserves_market_and_saved_simulations(tmp_path):
     assert before == after
     assert migrated.db.execute("PRAGMA quick_check").fetchone()[0] == "ok"
     migrated.close()
+
+
+def test_voice_bridge_pcm_transcripts_injection_and_reconnect_are_mocked():
+    store, provider = MarketStore(":memory:"), MockProvider()
+    app = create_app(
+        store=store,
+        feed_factory=FakeFeed,
+        serve_client=False,
+        ai_provider=provider,
+        demo_controls=True,
+    )
+
+    def turn(socket, input_expected):
+        assert socket.receive_bytes() == bytes(480)
+        if input_expected:
+            assert socket.receive_json()["role"] == "user"
+        assert socket.receive_json()["role"] == "assistant"
+        assert socket.receive_json()["type"] == "turn_complete"
+
+    with TestClient(app) as client:
+        for injected in (True, False):
+            with client.websocket_connect("/ws/ai/voice?symbol=BTC-USD") as socket:
+                ready = socket.receive_json()
+                assert (ready["inputRate"], ready["outputRate"]) == (16000, 24000)
+                turn(socket, False)
+                socket.send_bytes(bytes(3200))
+                turn(socket, True)
+                socket.send_json({"type": "inject_failure" if injected else "end"})
+                if injected:
+                    assert "Injected" in socket.receive_json()["detail"]
+            activities = client.get("/api/ai/status?symbol=BTC-USD").json()[
+                "activities"
+            ]
+            ended = next(
+                a
+                for a in activities
+                if a["context"].get("sessionId") == ready["sessionId"]
+            )
+            assert ended["status"] == ("injected_failure" if injected else "ended")
+            assert ended["response"]["inputBytes"] == 3200
+            assert ended["response"]["outputBytes"] == 960
+            assert ended["response"]["inputTranscriptObserved"]
+            assert ended["response"]["completedTurns"] == 2
+    store.close()
+
+
+def test_voice_foreign_origin_single_session_and_invalid_frame_are_rejected():
+    from starlette.websockets import WebSocketDisconnect
+
+    store, provider = MarketStore(":memory:"), MockProvider()
+    app = create_app(
+        store=store,
+        feed_factory=FakeFeed,
+        serve_client=False,
+        ai_provider=provider,
+        demo_controls=False,
+    )
+    with TestClient(app) as client:
+        with pytest.raises(WebSocketDisconnect):
+            with client.websocket_connect(
+                "/ws/ai/voice?symbol=BTC-USD",
+                headers={"Origin": "https://foreign.test"},
+            ):
+                pass
+        assert not provider.calls
+        with client.websocket_connect("/ws/ai/voice?symbol=BTC-USD") as first:
+            assert first.receive_json()["type"] == "ready"
+            with client.websocket_connect("/ws/ai/voice?symbol=BTC-USD") as second:
+                assert "already active" in second.receive_json()["detail"]
+            assert len(provider.calls) == 1
+            # Consume the mock greeting before checking malformed microphone PCM.
+            first.receive_bytes()
+            first.receive_json()
+            first.receive_json()
+            first.send_bytes(b"odd")
+            assert "Invalid audio frame" in first.receive_json()["detail"]
+    store.close()
+
+
+async def test_live_vision_keeps_image_and_question_in_one_turn(monkeypatch):
+    monkeypatch.setattr("server.ai_provider.setting", mock_settings)
+    messages = []
+
+    class Socket:
+        async def send(self, raw):
+            messages.append(json.loads(raw))
+
+        async def recv(self):
+            return '{"setupComplete":{}}'
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            return json.dumps(
+                {
+                    "serverContent": {
+                        "outputTranscription": {"text": "Mock image interpretation."},
+                        "turnComplete": True,
+                    }
+                }
+            )
+
+    @asynccontextmanager
+    async def connector(url, **kwargs):
+        assert url.startswith("wss://generativelanguage.googleapis.com/")
+        assert "key=" not in url
+        assert kwargs["ssl"].check_hostname
+        yield Socket()
+
+    p = GeminiProvider(voice_connector=connector)
+    try:
+        result = await p.respond(
+            {"simulated": True}, "Describe image", image="data:image/png;base64,TEST"
+        )
+        assert result["text"] == "Mock image interpretation."
+        assert result["requestedModel"] == "gemini-3.8-live"
+        parts = messages[1]["clientContent"]["turns"][0]["parts"]
+        assert parts[0]["inlineData"] == {"mimeType": "image/png", "data": "TEST"}
+        assert "Describe image" in parts[1]["text"]
+        assert "real-secret" not in json.dumps(messages)
+    finally:
+        await p.close()
+
+
+async def test_transient_capacity_retries_once_same_model_but_quota_never_retries(
+    monkeypatch,
+):
+    monkeypatch.setattr("server.ai_provider.setting", mock_settings)
+    for failure, expected in [(503, 2), (429, 1)]:
+        calls = []
+
+        def transport(request):
+            calls.append(str(request.url))
+            return httpx.Response(failure, json={"error": {"status": "UNAVAILABLE"}})
+
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(transport)
+        ) as client:
+            with pytest.raises(ProviderError):
+                await GeminiProvider(client).respond({}, "test")
+        assert len(calls) == expected
+        assert len(set(calls)) == 1
+        assert all("gemini-3.5-flash-lite:generateContent" in url for url in calls)

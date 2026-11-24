@@ -1,7 +1,7 @@
 """Opt-in real-provider verification against the local app; never mocks success.
 
-Calls can consume paid API credits. An optional WAV is uploaded to Realtime;
-label its origin explicitly. This probe does not claim browser-microphone proof.
+Uses the explicitly confirmed Gemini free tier and the application voice proxy.
+Label the optional WAV origin; this probe does not claim browser-microphone proof.
 """
 
 import argparse
@@ -11,124 +11,95 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
-import ssl
 import time
 import uuid
 import wave
 
-import certifi
 import httpx
 from websockets.asyncio.client import connect
 from websockets.exceptions import WebSocketException
 
 from server.ai import image_metadata
-from server.ai_provider import OpenAIProvider, ProviderError, setting
+from server.ai_provider import ProviderError
 
 
-async def audio_probe(context, path, description):
+async def audio_probe(base, symbol, path, description):
     with wave.open(str(path), "rb") as wav:
         if (wav.getnchannels(), wav.getsampwidth(), wav.getframerate()) != (
             1,
             2,
-            24000,
+            16000,
         ):
-            raise ValueError("Verification WAV must be mono PCM16 at 24 kHz")
+            raise ValueError("Verification WAV must be mono PCM16 at 16 kHz")
         pcm = wav.readframes(wav.getnframes())
-    if not 4800 <= len(pcm) <= 1_440_000:
+    if not 3200 <= len(pcm) <= 960000:
         raise ValueError("Verification audio must be 0.1–30 seconds")
-    provider = OpenAIProvider()
-    chunks, transcript, input_transcript, actual_model = [], "", "", None
+    chunks, transcripts, ready = [], [], None
     started = time.monotonic()
-    try:
-        async with asyncio.timeout(55):
-            async with connect(
-                "wss://api.openai.com/v1/realtime?model=" + provider.audio_model,
-                additional_headers={
-                    "Authorization": "Bearer " + setting("OPENAI_API_KEY")
-                },
-                ssl=ssl.create_default_context(cafile=certifi.where()),
-                max_size=4_000_000,
-                open_timeout=15,
-            ) as socket:
-                session = provider.realtime_session(context)
-                session["audio"]["input"].update(
-                    format={"type": "audio/pcm", "rate": 24000}, turn_detection=None
-                )
-                session["audio"]["output"]["format"] = {
-                    "type": "audio/pcm",
-                    "rate": 24000,
-                }
-                await socket.send(
-                    json.dumps(dict(type="session.update", session=session))
-                )
+    async with asyncio.timeout(65):
+        async with connect(
+            base.replace("http", "ws", 1) + "/ws/ai/voice?symbol=" + symbol,
+            origin=base,
+            max_size=2_000_000,
+            open_timeout=15,
+        ) as socket:
+
+            async def turn():
+                nonlocal ready
                 async for raw in socket:
+                    if isinstance(raw, bytes):
+                        chunks.append(raw)
+                        continue
                     event = json.loads(raw)
                     if event["type"] == "error":
-                        raise ProviderError(
-                            "The live Realtime probe returned a provider error. No audio success is claimed."
-                        )
-                    if event["type"] == "session.updated":
-                        actual_model = event.get("session", {}).get("model")
-                        break
-                for offset in range(0, len(pcm), 9600):
-                    await socket.send(
-                        json.dumps(
-                            dict(
-                                type="input_audio_buffer.append",
-                                audio=base64.b64encode(
-                                    pcm[offset : offset + 9600]
-                                ).decode(),
-                            )
-                        )
-                    )
-                    await asyncio.sleep(0.05)
-                await socket.send(json.dumps(dict(type="input_audio_buffer.commit")))
-                await socket.send(json.dumps(dict(type="response.create")))
-                async for raw in socket:
-                    event = json.loads(raw)
-                    kind = event["type"]
-                    if kind == "error":
-                        raise ProviderError(
-                            "The live Realtime probe returned an audio-session error."
-                        )
-                    if kind == "response.output_audio.delta":
-                        chunks.append(base64.b64decode(event["delta"]))
-                    if kind == "response.output_audio_transcript.done":
-                        transcript = event.get("transcript", "")
-                    if kind == "conversation.item.input_audio_transcription.completed":
-                        input_transcript = event.get("transcript", "")
-                    if kind == "response.done":
-                        if event.get("response", {}).get("status") != "completed":
-                            raise ProviderError(
-                                "Realtime audio did not complete successfully."
-                            )
-                        break
-        output = b"".join(chunks)
-        if not output or not transcript:
-            raise ProviderError(
-                "No returned audio/transcript was observed; the probe is incomplete."
-            )
-        target = Path("data/part-4-3-audio-response.wav")
-        target.parent.mkdir(exist_ok=True)
-        with wave.open(str(target), "wb") as wav:
-            wav.setnchannels(1)
-            wav.setsampwidth(2)
-            wav.setframerate(24000)
-            wav.writeframes(output)
-        return dict(
-            evidence="live-provider WebSocket audio exchange; not browser-microphone evidence",
-            inputOrigin=description,
-            model=actual_model,
-            requestedModel=provider.audio_model,
-            inputSeconds=len(pcm) / 48000,
-            outputSeconds=len(output) / 48000,
-            outputSha256=hashlib.sha256(output).hexdigest(),
-            inputTranscript=input_transcript,
-            outputTranscript=transcript,
-            elapsedSeconds=round(time.monotonic() - started, 2),
+                        raise ProviderError(event["detail"])
+                    if event["type"] == "ready":
+                        ready = event
+                    if event["type"] == "transcript":
+                        transcripts.append(dict(role=event["role"], text=event["text"]))
+                    if event["type"] == "turn_complete":
+                        return
+                raise ProviderError("Voice connection closed before the turn completed")
+
+            await turn()  # Observe the initial spoken greeting, then send audio.
+            greeting = list(transcripts)
+            transcripts.clear()
+            chunks.clear()
+            for offset in range(0, len(pcm), 3200):
+                await socket.send(pcm[offset : offset + 3200])
+                await asyncio.sleep(0.1)
+            for _ in range(12):
+                await socket.send(bytes(3200))
+                await asyncio.sleep(0.1)
+            await turn()
+            await socket.send(json.dumps(dict(type="end")))
+    output = b"".join(chunks)
+    incoming = " ".join(t["text"] for t in transcripts if t["role"] == "user")
+    outgoing = " ".join(t["text"] for t in transcripts if t["role"] == "assistant")
+    if not output or not incoming or not outgoing or ready is None:
+        raise ProviderError(
+            "Two-way audio/transcripts were incomplete; no success is claimed"
         )
-    finally:
-        await provider.close()
+    target = Path("data/part-4-3-audio-response.wav")
+    target.parent.mkdir(exist_ok=True)
+    with wave.open(str(target), "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(24000)
+        wav.writeframes(output)
+    return dict(
+        evidence="live Gemini audio through FastAPI WebSocket; not browser-microphone evidence",
+        inputOrigin=description,
+        requestedModel=ready["model"],
+        sessionId=ready["sessionId"],
+        inputSeconds=len(pcm) / 32000,
+        outputSeconds=len(output) / 48000,
+        outputSha256=hashlib.sha256(output).hexdigest(),
+        inputTranscript=incoming,
+        outputTranscript=outgoing,
+        greeting=greeting,
+        elapsedSeconds=round(time.monotonic() - started, 2),
+    )
 
 
 async def capture(args, result):
@@ -216,7 +187,7 @@ async def capture(args, result):
                     "Label the audio origin with --audio-description (microphone, prerecorded, or synthetic)"
                 )
             result["audio"] = await audio_probe(
-                state["context"], args.audio_input, args.audio_description
+                args.base, args.symbol, args.audio_input, args.audio_description
             )
         result["checks"] = dict(
             liveDecision=True,

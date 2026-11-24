@@ -1,18 +1,22 @@
-// Browser API doubles exercise the actual voice controller, not a live provider.
+// Browser API doubles exercise the actual Gemini PCM voice controller; no live provider.
 import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { RealtimeVoice } from "../client/voice.ts";
-
+import { pcm16 } from "../client/audio-worklet.js";
+const keys = [
+  "navigator",
+  "AudioContext",
+  "AudioWorkletNode",
+  "WebSocket",
+  "location",
+];
 const originals = Object.fromEntries(
-  ["navigator", "RTCPeerConnection", "fetch"].map((key) => [
-    key,
-    Object.getOwnPropertyDescriptor(globalThis, key),
-  ]),
+  keys.map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]),
 );
 const controllers = [];
 afterEach(() => {
-  for (const controller of controllers.splice(0)) controller.stop();
+  for (const c of controllers.splice(0)) c.stop();
   for (const [key, value] of Object.entries(originals)) {
     if (value) Object.defineProperty(globalThis, key, value);
     else delete globalThis[key];
@@ -22,47 +26,87 @@ function setup() {
   const states = [],
     transcripts = [],
     events = [],
-    peers = [];
+    sockets = [],
+    contexts = [],
+    worklets = [];
   const track = {
-    stopped: 0,
-    stop() {
-      this.stopped++;
+      stopped: 0,
+      stop() {
+        this.stopped++;
+      },
     },
-  };
-  const stream = { getTracks: () => [track] };
+    stream = { getTracks: () => [track] };
   Object.defineProperty(globalThis, "navigator", {
     configurable: true,
     value: { mediaDevices: { getUserMedia: async () => stream } },
   });
-  globalThis.RTCPeerConnection = class {
-    connectionState = "new";
+  globalThis.location = { protocol: "http:", host: "localhost:3000" };
+  globalThis.AudioContext = class {
+    currentTime = 0;
     closed = false;
-    channel = { close() {}, send() {} };
+    destination = {};
+    audioWorklet = { addModule: async () => {} };
     constructor() {
-      peers.push(this);
+      contexts.push(this);
     }
-    addTrack() {}
-    createDataChannel() {
-      return this.channel;
+    async resume() {}
+    async close() {
+      this.closed = true;
     }
-    async createOffer() {
-      return { type: "offer", sdp: "v=0\r\nm=audio 9 RTP/AVP 0\r\n" };
+    createMediaStreamDestination() {
+      return { stream: { mock: true } };
     }
-    async setLocalDescription() {}
-    async setRemoteDescription() {
-      this.connectionState = "connected";
-      this.onconnectionstatechange?.();
+    createMediaStreamSource() {
+      return { connect() {}, disconnect() {} };
+    }
+    createBuffer(channels, length, rate) {
+      return {
+        duration: length / rate,
+        getChannelData: () => new Float32Array(length),
+      };
+    }
+    createBufferSource() {
+      return { connect() {}, start() {}, stop() {}, buffer: null };
+    }
+  };
+  globalThis.AudioWorkletNode = class {
+    port = { onmessage: null };
+    constructor() {
+      worklets.push(this);
+    }
+    connect() {}
+    disconnect() {}
+  };
+  globalThis.WebSocket = class {
+    static OPEN = 1;
+    readyState = 1;
+    bufferedAmount = 0;
+    sent = [];
+    closed = false;
+    constructor(url) {
+      this.url = url;
+      sockets.push(this);
+      queueMicrotask(() =>
+        this.onmessage?.({
+          data: JSON.stringify({
+            type: "ready",
+            sessionId: 7,
+            inputRate: 16000,
+            outputRate: 24000,
+          }),
+        }),
+      );
+    }
+    send(data) {
+      this.sent.push(data);
     }
     close() {
       this.closed = true;
-      this.connectionState = "closed";
+      this.readyState = 3;
+      this.onclose?.();
     }
   };
-  globalThis.fetch = async () =>
-    new Response("v=0\r\nm=audio 9 RTP/AVP 0\r\n", {
-      headers: { "X-Audio-Session": "7" },
-    });
-  const audio = { srcObject: null, play: async () => {} };
+  const audio = { srcObject: null, play: async () => {}, pause() {} };
   const controller = new RealtimeVoice(audio, {
     onState: (state, detail) => states.push({ state, detail }),
     onTranscript: (role, text) => transcripts.push({ role, text }),
@@ -76,77 +120,70 @@ function setup() {
     states,
     transcripts,
     events,
-    peers,
+    sockets,
+    contexts,
+    worklets,
     track,
     stream,
     audio,
   };
 }
-
-test("WebRTC success receives transcripts; End releases microphone and transport", async () => {
+test("Live socket setup receives transcripts; End releases microphone, playback and transport", async () => {
   const s = setup();
   await s.controller.start("BTC-USD");
   assert.equal(s.states.at(-1).state, "live");
   assert.equal(s.events[0][1], "connected");
-  s.peers[0].channel.onmessage({
+  s.sockets[0].onmessage({
     data: JSON.stringify({
-      type: "conversation.item.input_audio_transcription.completed",
-      transcript: "Explain my simulated account.",
+      type: "transcript",
+      role: "user",
+      text: "Explain my simulated account.",
     }),
   });
-  s.peers[0].channel.onmessage({
+  s.sockets[0].onmessage({
     data: JSON.stringify({
-      type: "response.output_audio_transcript.done",
-      transcript: "The account is simulated.",
+      type: "transcript",
+      role: "assistant",
+      text: "The account is simulated.",
     }),
   });
   assert.deepEqual(
     s.transcripts.map((x) => x.role),
     ["user", "assistant"],
   );
+  s.worklets[0].port.onmessage({ data: new ArrayBuffer(3200) });
+  assert(s.sockets[0].sent.some((x) => x instanceof ArrayBuffer));
   s.controller.stop();
   assert.equal(s.track.stopped, 1);
-  assert.equal(s.peers[0].closed, true);
+  assert(s.sockets[0].closed);
+  assert(s.contexts[0].closed);
   assert.equal(s.audio.srcObject, null);
 });
-
 test("microphone denial reports failure before contacting provider", async () => {
   const s = setup();
   navigator.mediaDevices.getUserMedia = async () => {
     throw new Error("Microphone permission denied");
   };
-  let requests = 0;
-  globalThis.fetch = async () => {
-    requests++;
-    return new Response();
-  };
   await s.controller.start("BTC-USD");
   assert.equal(s.states.at(-1).state, "failed");
-  assert.match(s.states.at(-1).detail, /permission denied/);
-  assert.equal(requests, 0);
+  assert.equal(s.sockets.length, 0);
+  assert(s.contexts[0].closed);
 });
-
-test("provider outage stops acquired microphone and permits reconnect", async () => {
+test("provider outage stops microphone and permits reconnect", async () => {
   const s = setup();
-  globalThis.fetch = async () =>
-    new Response(JSON.stringify({ error: "Injected provider outage" }), {
-      status: 503,
-    });
   await s.controller.start("BTC-USD");
+  s.sockets[0].onmessage({
+    data: JSON.stringify({ type: "error", detail: "Injected provider outage" }),
+  });
   assert.equal(s.states.at(-1).state, "failed");
   assert.equal(s.track.stopped, 1);
-  assert.equal(s.peers[0].closed, true);
-  globalThis.fetch = async () =>
-    new Response("v=0\r\nm=audio", { headers: { "X-Audio-Session": "8" } });
   await s.controller.start("BTC-USD");
   assert.equal(s.states.at(-1).state, "live");
 });
-
 test("connection loss and injected failure are distinguishable", async () => {
   const s = setup();
   await s.controller.start("BTC-USD");
-  s.peers[0].connectionState = "disconnected";
-  s.peers[0].onconnectionstatechange();
+  s.sockets[0].onclose();
   assert.equal(s.states.at(-1).state, "failed");
   assert.equal(s.events.at(-1)[1], "failure");
   await s.controller.start("BTC-USD");
@@ -154,8 +191,7 @@ test("connection loss and injected failure are distinguishable", async () => {
   assert.equal(s.events.at(-1)[1], "injected_failure");
   assert.equal(s.track.stopped, 2);
 });
-
-test("End during microphone prompt cleans up a late granted stream", async () => {
+test("End during permission prompt cleans up a late granted stream", async () => {
   const s = setup();
   let grant;
   navigator.mediaDevices.getUserMedia = () =>
@@ -163,15 +199,15 @@ test("End during microphone prompt cleans up a late granted stream", async () =>
       grant = resolve;
     });
   const starting = s.controller.start("BTC-USD");
-  s.controller.stop("User ended before permission resolved");
+  await Promise.resolve();
+  s.controller.stop();
   grant(s.stream);
   await starting;
   assert.equal(s.track.stopped, 1);
-  assert.equal(s.peers.length, 0);
+  assert.equal(s.sockets.length, 0);
   assert.equal(s.states.at(-1).state, "idle");
 });
-
-test("audio setup timeout cannot revive a canceled session", async () => {
+test("setup timeout cannot revive a canceled session", async () => {
   const s = setup();
   let grant;
   navigator.mediaDevices.getUserMedia = () =>
@@ -181,14 +217,12 @@ test("audio setup timeout cannot revive a canceled session", async () => {
   const starting = s.controller.start("BTC-USD");
   await delay(50);
   assert.equal(s.states.at(-1).state, "failed");
-  assert.match(s.states.at(-1).detail, /timed out/);
   grant(s.stream);
   await starting;
   assert.equal(s.track.stopped, 1);
-  assert.equal(s.peers.length, 0);
+  assert.equal(s.sockets.length, 0);
 });
-
-test("a late autoplay rejection cannot revive an ended session", async () => {
+test("late autoplay rejection cannot revive an ended session", async () => {
   const s = setup();
   let rejectPlayback;
   s.audio.play = () =>
@@ -196,23 +230,42 @@ test("a late autoplay rejection cannot revive an ended session", async () => {
       rejectPlayback = reject;
     });
   await s.controller.start("BTC-USD");
-  s.peers[0].ontrack({ streams: [s.stream], track: s.track });
   s.controller.stop();
   rejectPlayback(new Error("Autoplay denied after End"));
   await Promise.resolve();
   assert.equal(s.states.at(-1).state, "idle");
-  assert.equal(s.track.stopped, 1);
 });
-
-test("a failed provider response ends the live session and releases the microphone", async () => {
+test("slow audio upload fails safely and stops the microphone", async () => {
   const s = setup();
   await s.controller.start("BTC-USD");
-  s.peers[0].channel.onmessage({
-    data: JSON.stringify({
-      type: "response.done",
-      response: { status: "failed" },
-    }),
-  });
+  s.sockets[0].bufferedAmount = 100000;
+  s.worklets[0].port.onmessage({ data: new ArrayBuffer(3200) });
   assert.equal(s.states.at(-1).state, "failed");
   assert.equal(s.track.stopped, 1);
+});
+test("PCM resampling preserves duration, silence, clipping and speech-band frequency", () => {
+  for (const rate of [44100, 48000]) {
+    const input = Float32Array.from({ length: rate / 10 }, (_, i) =>
+      Math.sin((2 * Math.PI * 1000 * i) / rate),
+    );
+    const output = new Int16Array(pcm16(input, rate));
+    assert.equal(output.length, 1600);
+    let crosses = 0;
+    for (let i = 1; i < output.length; i++)
+      if (output[i] > 0 != output[i - 1] > 0) crosses++;
+    assert(Math.abs(crosses - 200) < 3);
+  }
+  assert(
+    [...new Int16Array(pcm16(new Float32Array(4800), 48000))].every(
+      (x) => x === 0,
+    ),
+  );
+  assert.equal(
+    new Int16Array(pcm16(new Float32Array(4800).fill(2), 48000))[0],
+    32767,
+  );
+  assert.equal(
+    new Int16Array(pcm16(new Float32Array(4800).fill(-2), 48000))[0],
+    -32768,
+  );
 });

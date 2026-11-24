@@ -41,6 +41,45 @@ def test_duplicate_preserves_identity_and_distinct_receipts(store):
     assert store.replay("BTC-USD")[1]["receivedAt"] == T + 35000
 
 
+def test_incremental_totals_match_sql_and_reopen(tmp_path):
+    path = tmp_path / "counts.sqlite"
+    s = MarketStore(path)
+    assert s.stats()["receipts"] == 0
+    for n in range(8):
+        o = candle(sourceTime=T + n * 60000, receivedAt=T + (n + 1) * 60000)
+        s.ingest_batch([o, o])
+        revised = candle(
+            sourceTime=o["sourceTime"],
+            receivedAt=o["receivedAt"],
+            orderingTime=T + 40000,
+        )
+        revised["payload"]["close"] = 101
+        s.ingest_batch([revised])
+        stale = candle(
+            sourceTime=o["sourceTime"],
+            receivedAt=o["receivedAt"],
+            orderingTime=T + 10000,
+        )
+        stale["payload"]["close"] = 100
+        s.ingest_batch([stale])
+        totals = s.stats()
+        assert (
+            totals["observations"]
+            == s.db.execute("SELECT COUNT(*) FROM observations").fetchone()[0]
+        )
+        assert totals["receipts"] == (n + 1) * 4
+        assert totals["candles"] == n + 1
+        assert totals["duplicates"] == n + 1
+        assert totals["revisions"] == (n + 1) * 2
+        assert totals["superseded"] == n + 1
+        # A repeated status query must not recount any previously counted IDs.
+        assert s.stats() == totals
+    s.close()
+    reopened = MarketStore(path)
+    assert reopened.stats() == totals
+    reopened.close()
+
+
 def test_property_order_and_js_numeric_format_do_not_create_false_revision(store):
     o = candle()
     store.ingest_batch([o])

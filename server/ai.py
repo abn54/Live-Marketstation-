@@ -59,7 +59,7 @@ class AIAssistant:
         )
         self.decision_lock = asyncio.Lock()
         self.interaction_slots = asyncio.Semaphore(2)
-        # Restarts never silently resume paid automation or an unfilled order.
+        # Restarts never silently resume provider automation or an unfilled order.
         with store.lock:
             for row in store.db.execute("SELECT * FROM ai_bots").fetchall():
                 account = self._account(row)
@@ -209,7 +209,7 @@ class AIAssistant:
                 return self.get_bot(bot_id)
             if running and not self.provider.configured:
                 raise ValueError(
-                    "Configure the private OpenAI API key before starting automation"
+                    "Configure the private Gemini API key before starting automation"
                 )
             self._cancel(account, "cancelled: automation controls changed")
             if running:
@@ -632,23 +632,3 @@ class AIAssistant:
                 context,
                 dict(reason=str(exc), question=message),
             )
-
-    async def audio(self, symbol, sdp):
-        context = self.context(symbol)
-        try:
-            answer = await self.provider.realtime(sdp, context)
-            activity = self.record(
-                symbol,
-                "audio",
-                "negotiated",
-                context,
-                dict(
-                    model=self.provider.audio_model,
-                    reason="Live Realtime SDP negotiated; browser connection and audio exchange require separate verification",
-                    evidence="live-provider",
-                ),
-            )
-            return answer, activity["id"]
-        except ProviderError as exc:
-            self.record(symbol, "audio", "unavailable", context, dict(reason=str(exc)))
-            raise

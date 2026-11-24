@@ -2,6 +2,24 @@
 
 These are selected decision records, not a complete chat export. Prompt excerpts are from the assignment text/user instructions. Source observations, injected tests, and UI captures have different evidentiary roles. The final report pins all current links to the submitted implementation/evidence commit. The previous framework implementation is retained only in history.
 
+## Part 4.3 · Free-tier revision, real image and audio evidence
+
+- **Intent/prompt.** The student said, “i dont wanna pay,” approved Gemini, and confirmed “Saved — project is Free tier.”
+- **Decision/artifacts.** `server/ai_provider.py` now uses server-only Gemini GenerateContent for checked decisions/chat and Gemini Live for chart image interpretation/speech. Explicit free-tier confirmation and model allowlists reject unsupported/paid choices before requests; no billing is enabled. `server/voice.py`, `client/voice.ts` and `client/audio-worklet.js` implement bounded PCM streaming and cleanup. No runtime mocks replace failures.
+- **Failed/revised approach.** Real GenerateContent image requests returned 503 high-demand errors. A separate Live video frame yielded an image-unavailable reply. Putting the actual PNG and question in one Live client-content turn fixed the image path. Older exhausted OpenAI credit evidence remains below as historical context. The student did not purchase credits.
+- **Live observation.** [Selected actual contexts/replies](../evidence/part-4-3-gemini-live.json) include a strict checked hold with unchanged simulated cash, grounded chat and actual chart interpretation. [Exact PNG](../evidence/part-4-3-gemini-chart.png) and [Vue result](../evidence/part-4-3-gemini-vision.jpg) establish the image supplied and response displayed. A clearly labeled synthetic question traversed the real FastAPI/Gemini audio bridge; the provider transcribed input and returned spoken account context. That test does not establish a user microphone/video demonstration. Actual transient text service failures also disarmed automation and remain audited.
+- **Verification.** 83 Python and 9 actual-controller/DSP tests passed with Vue build and both verifiers. Mocked tests separately cover automatic buy/sell accounting, invalid responses, unavailable service, malformed audio, single-session limits, failure/reconnect and cleanup. No mock is labeled current provider evidence.
+- **Uncertainty.** Free-tier eligibility/capacity/quotas, browser microphone permission and autoplay remain external. The user's own 30–60-second combined video is pending; no speaking script or synthetic replacement video is published.
+
+## Part 4.3 · Large-history startup regression
+
+- **Intent.** Preserve genuine saved market observations and keep the frontend working.
+- **Failure.** Approximately 887,000 receipts made complete history counts on each pricing message starve the event loop; the browser repeatedly reconnected and HTTP status timed out.
+- **Revision.** `MarketStore.stats` aggregates append-only IDs once on open and then only new rows. Receipt-first queries retain cursor order without sorting all observations. No user records were removed/reset.
+- **Observation/check.** A status request took about 38 ms after the change on this machine and the actual browser restored live chart status. Tests compare counts through duplicate/revised/superseded inputs, repeated status reads and reopen. Performance depends on history/hardware; no retention policy is claimed.
+
+The next three Part 4.3 entries document the initial OpenAI implementation/failure. Their then-pending live status is superseded by the Gemini evidence above.
+
 ## Part 4.3 · From model output to a checked simulated outcome
 
 - **Intent/prompt.** “Supply relevant market observations, indicators, and simulated-account context” and show checks “before the response can cause a simulated action.”

@@ -67,7 +67,14 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
     try:
         run(["git", "clone", "--quiet", "--no-local", str(repo), str(checkout)])
         run(["git", "checkout", "--quiet", sha])
-        ignored = [".venv", "node_modules", ".env", "dist", "data/market.sqlite"]
+        ignored = [
+            ".venv",
+            "node_modules",
+            ".env",
+            ".env.local",
+            "dist",
+            "data/market.sqlite",
+        ]
         result["initiallyAbsent"] = {
             path: not (checkout / path).exists() for path in ignored
         }
@@ -80,11 +87,20 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
         run(["npm", "ci", "--no-fund", "--no-audit"])
         run(["npm", "test"])
         run(["npm", "run", "build"])
+        run(["npm", "run", "strategy:verify"])
+        run(["npm", "run", "ai:verify"])
         env = dict(
             os.environ,
             DATABASE_PATH=str(checkout / "data/clean.sqlite"),
             ENABLE_DEMO_CONTROLS="false",
         )
+        for name in (
+            "OPENAI_API_KEY",
+            "GEMINI_API_KEY",
+            "GOOGLE_API_KEY",
+            "GEMINI_FREE_TIER_CONFIRMED",
+        ):
+            env.pop(name, None)
         run(["npm", "run", "db:init"], env)
         run(
             [
@@ -132,6 +148,26 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
                     }
                     page = client.get(base + "/")
                     assert page.status_code == 200 and "/assets/" in page.text
+                    assert 'id="root"' in page.text
+                    ai_status = client.get(
+                        base + "/api/ai/status?symbol=BTC-USD"
+                    ).json()
+                    assert (
+                        ai_status["provider"] == "Google Gemini"
+                        and not ai_status["configured"]
+                    )
+                    bot = client.post(
+                        base + "/api/ai/bots", json={"symbol": "BTC-USD"}
+                    ).json()
+                    review = client.post(
+                        base + "/api/ai/decision",
+                        json={
+                            "botId": bot["id"],
+                            "requestId": "clean-checkout-review",
+                            "execute": False,
+                        },
+                    ).json()
+                    assert review["status"] == "unavailable"
                     bars = client.get(base + "/api/candles?symbol=BTC-USD").json()
                     assert bars["candles"]
                     replay = client.get(
@@ -180,6 +216,8 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
 
                 result["productionSmoke"] = {
                     "http200": True,
+                    "geminiRoutesPresent": True,
+                    "missingCredentialsUnavailableWithoutFallback": True,
                     "stack": health["stack"],
                     "candlesAvailable": len(bars["candles"]),
                     "recordedReplayAvailable": True,
@@ -204,7 +242,7 @@ with tempfile.TemporaryDirectory(prefix="marketstation-clean-") as task_tmp:
         raise
     finally:
         result["seconds"] = round(time.time() - started, 2)
-        (repo / "evidence/part-4-2-clean-checkout.json").write_text(
+        (repo / "evidence/part-4-3-clean-checkout.json").write_text(
             json.dumps(result, indent=2) + "\n"
         )
 print(
